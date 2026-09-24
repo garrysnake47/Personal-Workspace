@@ -1057,3 +1057,8 @@ User asked for MUI (Autocomplete page as the reference) on all fields. `@mui/mat
 - Ticket search (`work-log/ticket-search.tsx`) is an MUI Autocomplete (freeSolo) over `listTickets({take:200})`; pick = lookup, Enter = old find/attach/create flow.
 - Global focus outline suppressed on `.MuiInputBase-input/.MuiSelect-select/.MuiAutocomplete-input` (MUI's 2px teal border is the indicator).
 - Deliberately NOT converted: notes move-to-section pill select and code-block language chip (inline micro-controls).
+
+## 2026-09-24 — Repo + hosting
+- Code lives at https://github.com/garrysnake47/Personal-Workspace (branch `main`, whole workspace; the empty nested `app/.git` was removed). Root `.gitignore` + `app/.gitignore` keep `.env*` (except `.env.example`), `node_modules`, `.next`, `src/generated` out.
+- Seed scripts read the demo password from `SEED_PASSWORD` (env) — never hardcode credentials; the repo is public.
+- Hosting plan: Vercel (Root Directory = `app`) + a hosted Postgres (Neon via Vercel Marketplace recommended). Env vars on Vercel: `DATABASE_URL` (pooled), `AUTH_SECRET`, `AUTH_TRUST_HOST=true`. `postinstall` runs `prisma generate`. Run `prisma migrate deploy` (+ optional seed) against the direct/unpooled URL from a laptop, not in the Vercel build.
