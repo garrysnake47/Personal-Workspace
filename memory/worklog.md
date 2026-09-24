@@ -228,3 +228,4 @@ Rebuilt `/work-logs/[workLogId]`: removed Meetings/Tickets count tiles and "In t
 - 2026-09-24 (v27): Banner photo framed at 45% so the mug is fully clear; today block at true vertical centre (md: grid rows 1fr/auto/1fr, .dashboard-hero-inner = 100dvh - nav).
 - 2026-09-24 (v28): Work-log timeline rail: ticket history is its own scroll area (fills the sticky rail up to 100dvh-8rem on lg, max 28rem below); slim palette scrollbar via .wl-scroll.
 - 2026-09-24 (v29): Pushed workspace to GitHub (initial commit 0f13d26). Seed password moved to SEED_PASSWORD env; .env.example fixed (typo) + SEED_PASSWORD; root .gitignore added.
+- 2026-09-24 (v30): Added `npm run db:hosted [-- --seed]` (app/scripts/hosted-db.mjs) — migrates/seeds the hosted DB from HOSTED_DATABASE_URL in gitignored app/.env. Generated AUTH_SECRET into gitignored app/.env.vercel for pasting into Vercel. Pushed ee4ee09.
