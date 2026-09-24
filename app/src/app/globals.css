@@ -1,0 +1,1855 @@
+/* MUI (fields) sits between Tailwind base and components so utilities win. */
+@layer theme, base, mui, components, utilities;
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   WorkNest — design tokens
+   Source of truth for the values below: memory/design.md (owned by UI Designer).
+   Do NOT add raw hex/px in components. Use the tokens.
+
+   Dark mode toggles via `class="dark"` on <html>. The frontend dev owns the
+   toggle UI; this file only wires the variant + the token overrides.
+--------------------------------------------------------------------------- */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ============================ RAW TOKENS — LIGHT ========================== */
+:root {
+  color-scheme: light;
+
+  /* Surfaces (ambient -> raised -> hover/inset). A neutral blue-slate
+     ladder keeps dense work screens calm without making cards disappear. */
+  --c-bg: #f8fafc;
+  --c-surface: #ffffff;
+  --c-surface-2: #f1f5f9;
+  --c-surface-3: #e2e8f0;
+  --c-card: var(--c-surface);
+  --c-card-tint: var(--c-surface-2);
+  --c-card-navy: var(--c-surface-2);
+  --c-overlay: rgba(15, 23, 42, 0.52);
+
+  /* Text */
+  --c-text: #0f172a;
+  --c-text-muted: #475569;
+  --c-text-subtle: #64748b;
+  --c-text-inverse: #ffffff;
+
+  /* Lines */
+  --c-border: #e2e8f0;        /* dividers, card outlines (decorative) */
+  --c-border-strong: #64748b; /* functional edges: inputs, checkboxes, toggles */
+
+  /* Brand / action */
+  --c-primary: #0d9488;
+  --c-primary-strong: #0f766e; /* text-size teal: links, small labels (5.3:1 on white) */
+  --c-primary-hover: #0f766e;
+  --c-primary-active: #115e59;
+  --c-primary-fg: #ffffff;
+  --c-primary-subtle: #ccfbf1;
+  --c-accent-text: #0f766e;
+
+  /* Feedback */
+  --c-danger: #dc2626;
+  --c-danger-fg: #ffffff;
+  --c-danger-subtle: #fde9e9;
+  --c-success: #15803d;
+  --c-success-fg: #ffffff;
+  --c-success-subtle: #dff4e4;
+  --c-warning: #b45309;
+  --c-warning-fg: #ffffff;
+  --c-warning-subtle: #fdf0d8;
+  --c-info: #1d4ed8;
+  --c-info-fg: #ffffff;
+  --c-info-subtle: #dbeafe;
+
+  /* Focus */
+  --c-ring: #0f766e;
+  --c-ring-offset: var(--c-bg);
+
+  /* Ticket status — 7 states. `-bg` is the badge fill, `-fg` the badge label,
+     the bare token is the dot / left-border / outline accent. */
+  --c-status-open: #475569;
+  --c-status-open-bg: #f1f5f9;
+  --c-status-open-fg: #475569;
+
+  --c-status-progress: #2563eb;
+  --c-status-progress-bg: #e6eefe;
+  --c-status-progress-fg: #1d4ed8;
+
+  --c-status-blocked: #b91c1c;
+  --c-status-blocked-bg: #fde9e9;
+  --c-status-blocked-fg: #b91c1c;
+
+  --c-status-waiting: #92400e;
+  --c-status-waiting-bg: #fdf0d8;
+  --c-status-waiting-fg: #92400e;
+
+  --c-status-testing: #6d28d9;
+  --c-status-testing-bg: #f0e9fe;
+  --c-status-testing-fg: #6d28d9;
+
+  --c-status-completed: #166534;
+  --c-status-completed-bg: #dff4e4;
+  --c-status-completed-fg: #166534;
+
+  --c-status-closed: #57534e;
+  --c-status-closed-bg: #edeae7;
+  --c-status-closed-fg: #57534e;
+
+  /* Task priority — rendered as dot + label, not as a filled badge. */
+  --c-priority-low: #475569;
+  --c-priority-low-bg: #f1f5f9;
+  --c-priority-medium: #0369a1;
+  --c-priority-medium-bg: #e4f2fb;
+  --c-priority-high: #c2410c;
+  --c-priority-high-bg: #fdeee4;
+  --c-priority-urgent: #be123c;
+  --c-priority-urgent-bg: #fde8ed;
+
+  /* Sidebar chrome — graphite, and the SAME in both themes. The rail is the
+     app's identity, not a surface: it stays dark in light mode on purpose, the
+     way Linear/Vercel/Notion hold their chrome. Do not wire these to .dark. */
+  --c-sidebar: #1b1f27;          /* graphite, lifted off near-black */
+  --c-sidebar-2: #262b35;        /* hover */
+  --c-sidebar-3: #323845;        /* pressed */
+  --c-sidebar-fg: #f3f5f7;       /* 15.1:1 */
+  --c-sidebar-muted: #aab2c0;    /* 7.7:1 — nav labels */
+  --c-sidebar-subtle: #7d8798;   /* 4.6:1 — the toggle's only boundary */
+  --c-sidebar-border: #323845;
+  --c-sidebar-accent: #2dd4bf;
+  --c-sidebar-accent-bg: rgba(45, 212, 191, 0.14);
+
+  /* Elevation — flat-first. Borders do the work; shadows only for overlays. */
+  --sh-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --sh-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --sh-md: 0 4px 12px -2px rgba(15, 23, 42, 0.10), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --sh-lg: 0 12px 32px -8px rgba(15, 23, 42, 0.18), 0 4px 8px -4px rgba(15, 23, 42, 0.08);
+}
+
+/* The nav pill is dark in BOTH themes, so it must not inherit the page's focus
+   ring: the light ring (#0f766e) lands at 2.69:1 on an active nav item. Scoping
+   the bright teal ring to the pill clears 3:1 in either theme (SC 1.4.11). */
+#app-nav {
+  --c-ring: var(--c-sidebar-accent);
+  --c-ring-offset: var(--c-sidebar);
+}
+
+/* Authenticated workspace palette (user-supplied, 2026-09-24):
+     #3c6e71 teal · #284b63 navy · #353535 charcoal — plus their shades only.
+   Page is white. Cards are white with a teal-shade border by default; a tinted
+   fill (`bg-card-tint` teal / `bg-card-navy`) is used only where a card needs
+   emphasis. No neutral grey fills. Scoped to the app shell so the
+   marketing homepage and auth pages keep their own look. */
+.app-shell {
+  color-scheme: light;
+  --c-overlay: rgba(40, 75, 99, 0.55);   /* navy scrim */
+  --c-bg: #ffffff;
+  --c-surface: #ffffff;         /* inputs, menus, items nested in cards */
+  --c-surface-2: #f1f6f6;       /* teal ~6% — toolbars, insets, hover */
+  --c-surface-3: #dfebec;       /* teal ~15% — pressed */
+  --c-card: #ffffff;            /* default card fill */
+  --c-card-tint: #e9f1f1;       /* teal ~10% — emphasis cards only */
+  --c-card-navy: #e7edf2;       /* navy ~10% — emphasis cards only */
+  --c-text: #353535;            /* charcoal, 12.2:1 */
+  --c-text-muted: #414141;      /* charcoal shade, 10.2:1 — descriptions */
+  --c-text-subtle: #555555;     /* charcoal shade, 7.5:1 — sublabels, hints */
+  --c-text-inverse: #ffffff;
+  --c-border: #8fb1b4;          /* teal ~55% — card edges, dividers (clearly visible) */
+  --c-border-strong: #5f8587;   /* control edges, 4.2:1 */
+  --c-primary: #3c6e71;         /* 5.6:1 on white */
+  --c-primary-strong: #284b63;
+  --c-primary-hover: #325c5f;
+  --c-primary-active: #284b63;
+  --c-primary-fg: #ffffff;
+  --c-primary-subtle: #d3e3e4;  /* selected state — reads against the card tint */
+  --c-accent-text: #284b63;     /* 9.1:1 */
+  --c-ring: #3c6e71;
+  --c-ring-offset: var(--c-bg);
+  /* Neutral status/priority chips were slate — retint to navy. */
+  --c-status-open: #284b63;
+  --c-status-open-bg: #e3ebf1;
+  --c-status-open-fg: #284b63;
+  --c-status-closed: #284b63;
+  --c-status-closed-bg: #e3ebf1;
+  --c-status-closed-fg: #284b63;
+  --c-priority-low: #284b63;
+  --c-priority-low-bg: #e3ebf1;
+  --c-sidebar: #284b63;         /* primary buttons, theme toggle, dark chrome */
+  --c-sidebar-2: #213f53;
+  --c-sidebar-3: #1a3343;
+  --c-sidebar-fg: #ffffff;
+  --c-sidebar-muted: #d2dde5;
+  --c-sidebar-subtle: #a9bccb;
+  --c-sidebar-border: rgba(255, 255, 255, 0.18);
+  --c-sidebar-accent: #ffffff;
+  --c-sidebar-accent-bg: rgba(255, 255, 255, 0.16);
+}
+
+/* The body behind the shell (overscroll bounce) stays white too. */
+html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
+
+/* Dark: navy-based, not grey. */
+.dark .app-shell {
+  color-scheme: dark;
+  --c-overlay: rgba(6, 14, 20, 0.78);
+  --c-bg: #0e1a22;
+  --c-surface: #13232e;
+  --c-surface-2: #182c39;
+  --c-surface-3: #213a4a;
+  --c-card: #13232e;
+  --c-card-tint: #183238;
+  --c-card-navy: #1a3040;
+  --c-text: #f2f5f7;
+  --c-text-muted: #cfdce2;
+  --c-text-subtle: #a3b8c2;
+  --c-text-inverse: #0e1a22;
+  --c-border: #2b4556;
+  --c-border-strong: #7f9cab;
+  --c-primary: #7fb2b5;
+  --c-primary-strong: #9cc0d6;
+  --c-primary-hover: #99c4c6;
+  --c-primary-active: #6a9fa2;
+  --c-primary-fg: #0e1a22;
+  --c-primary-subtle: #1f3f44;
+  --c-accent-text: #a9cde0;
+  --c-ring: #9cc0d6;
+  --c-ring-offset: var(--c-bg);
+  --c-status-open: #9cc0d6;
+  --c-status-open-bg: #1d3444;
+  --c-status-open-fg: #b8d3e4;
+  --c-status-closed: #9cc0d6;
+  --c-status-closed-bg: #1d3444;
+  --c-status-closed-fg: #b8d3e4;
+  --c-priority-low: #9cc0d6;
+  --c-priority-low-bg: #1d3444;
+  --c-sidebar: #284b63;
+  --c-sidebar-2: #325a75;
+  --c-sidebar-3: #3b6886;
+  --c-sidebar-fg: #ffffff;
+  --c-sidebar-muted: #d2dde5;
+  --c-sidebar-subtle: #a9bccb;
+  --c-sidebar-border: rgba(255, 255, 255, 0.18);
+  --c-sidebar-accent: #ffffff;
+  --c-sidebar-accent-bg: rgba(255, 255, 255, 0.16);
+}
+
+.dashboard-page { --c-bg: #ffffff; }
+.dashboard-page section.border-t { border-top-color: transparent; }
+
+/* Dashboard hero — a full-viewport banner. It breaks out of the centred page
+   well to the viewport edges, tucks up under the sticky nav (4rem + 1px
+   border) and fills the rest of the screen. The photo is masked into the
+   card tint: along the bottom on phones, from the left edge on md+. */
+.dashboard-today-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin-inline: calc(50% - 50vw);
+  /* Pull up under the sticky nav (4rem + 1px border, 5.5rem from md) and the
+     page's top padding, so the menu sits ON the banner. */
+  margin-top: calc(-1 * (4rem + 1px + clamp(1rem, 2vw, 1.5rem)));
+  padding-top: calc(4rem + 1px);
+  background: var(--c-card-tint);
+  border-bottom: 1px solid var(--c-border);
+}
+/* Light mode: user-supplied photo, ungraded (no colour overlay). The banner
+   takes the photo's own sampled light tone (#e0e8e5, a cool white that sits in
+   the teal palette) so the masked edge melts in with no colour shift. */
+html:not(.dark) .dashboard-today-card {
+  --c-card-tint: #e0e8e5;
+  --c-border: #b3c7c3;
+}
+/* Phones: the photo is a band UNDER the text, with a narrow soft top edge. */
+.dashboard-today-art {
+  position: relative;
+  order: 2;
+  height: 15rem;
+  z-index: 0;
+  background: var(--c-surface-3) url("/Images/portfolio/dashboard-desk-cool.webp") 50% 70% / cover no-repeat;
+  /* A narrow soft edge only — the rest of the photo is untouched. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 3rem);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 3rem);
+}
+.dark .dashboard-today-art { background-image: url("/Images/portfolio/worklog-dark.webp"); }
+/* Dashboard: the menu is part of the banner. Transparent while the banner is
+   in view, then it fades to the normal solid bar over the first 160px of
+   scroll (scroll-driven animation). Browsers without that get a solid bar in
+   the banner's own cream so it still reads as one piece. */
+.app-shell:has(.dashboard-today-card) .app-header,
+.app-shell:has(.dashboard-today-card) #app-nav {
+  background: transparent;
+}
+.app-shell:has(.dashboard-today-card) .app-header { border-bottom-color: transparent; }
+@supports (animation-timeline: scroll()) {
+  @keyframes app-header-solidify {
+    from { background-color: transparent; border-bottom-color: transparent; }
+    to { background-color: var(--c-bg); border-bottom-color: var(--c-border); }
+  }
+  .app-shell:has(.dashboard-today-card) .app-header {
+    animation: app-header-solidify linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 160px;
+  }
+}
+@supports not (animation-timeline: scroll()) {
+  html:not(.dark) .app-shell:has(.dashboard-today-card) .app-header { background: #e0e8e5; }
+}
+/* Shortcut buttons float over the photo on wide screens — keep them solid. */
+.dashboard-hero-links a { background: color-mix(in srgb, var(--c-surface) 92%, transparent); backdrop-filter: blur(6px); }
+
+.work-logs-page h1 { font-weight: 750; }
+
+/* Card recipe used across the work-log pages: teal-tint fill + edge,
+   plain title row (no header bar). In the components layer so utilities can still override it. */
+@layer components {
+.wl-card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 1rem;
+  box-shadow: var(--sh-xs);
+}
+.wl-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.875rem 1.25rem 0;
+}
+}
+/* Dark navy hero panel (edit-page header). Re-points the tokens inside it so
+   the same components (inputs, secondary button, pills) render light-on-navy. */
+.wl-hero {
+  --c-text: #ffffff;
+  --c-text-muted: #dbe5ec;
+  --c-text-subtle: #b9cad6;
+  --c-accent-text: #bfe0e2;
+  --c-surface: rgba(255, 255, 255, 0.08);
+  --c-surface-2: rgba(255, 255, 255, 0.16);
+  --c-surface-3: rgba(255, 255, 255, 0.22);
+  --c-border: rgba(255, 255, 255, 0.24);
+  --c-border-strong: rgba(255, 255, 255, 0.55);
+  --c-primary: #9fd0d3;
+  --c-success: #9be3b4;   /* save-status tones, light enough for navy */
+  --c-warning: #fcd88a;
+  --c-danger: #ffb4b4;
+  --c-ring: #ffffff;
+  --c-ring-offset: var(--c-sidebar);
+  background: var(--c-sidebar);
+  border-color: var(--c-sidebar);
+  color: var(--c-text);
+}
+/* Inputs inside the navy hero: solid white fields with charcoal text so they
+   read unmistakably as editable. Tokens are reset to the light palette. */
+.wl-hero .wl-field {
+  --c-text: #353535;
+  --c-text-muted: #414141;
+  --c-text-subtle: #555555;
+  --c-accent-text: #284b63;
+  --c-surface: #ffffff;
+  --c-primary: #3c6e71;
+  background: #ffffff;
+  border: 1px solid #ffffff;
+  border-radius: 0.625rem;
+  box-shadow: inset 0 1px 2px rgba(40, 75, 99, 0.18);
+  transition: box-shadow 150ms ease, border-color 150ms ease;
+}
+.wl-hero .wl-field:hover { border-color: #9fd0d3; }
+.wl-hero .wl-field:focus-within {
+  border-color: #3c6e71;
+  box-shadow: 0 0 0 3px rgba(159, 208, 211, 0.75);
+}
+/* The field's own teal ring is the focus indicator; drop the inner input's
+   global outline, which rendered as a white box inside the field. */
+.wl-hero .wl-field input:focus-visible { outline: none; }
+
+/* MUI fields draw their own 2px teal focus border; the global outline would
+   add a second box inside them. */
+.MuiInputBase-input:focus-visible,
+.MuiSelect-select:focus-visible,
+.MuiAutocomplete-input:focus-visible { outline: none; }
+/* Slim, palette-coloured scrollbar for inner scroll areas (ticket history). */
+.wl-scroll { scrollbar-width: thin; scrollbar-color: var(--c-border-strong) transparent; overscroll-behavior: contain; }
+.wl-scroll:focus-visible { outline-offset: -2px; }
+.work-log-detail-page aside .worklog-prose { font-size: var(--text-sm); line-height: 1.55; }
+
+/* Work-log Markdown fields stay deliberately smaller than the Notes editor.
+   TipTap keeps Markdown shortcuts and keyboard formatting WYSIWYG while the
+   saved value remains portable Markdown in the existing text columns. */
+.worklog-editor-body {
+  padding: 0;
+}
+
+.worklog-prose {
+  color: var(--c-text);
+  caret-color: var(--c-primary-strong);
+  font-size: var(--text-md);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.worklog-prose ::selection {
+  background: var(--c-primary-subtle);
+  color: var(--c-text);
+}
+
+.worklog-prose > * + * {
+  margin-top: 0.7em;
+}
+
+.worklog-prose p.is-editor-empty:first-child::before {
+  color: var(--c-text-subtle);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.worklog-prose strong { font-weight: 700; }
+.worklog-prose em { font-style: italic; }
+.worklog-prose s { color: var(--c-text-muted); }
+.worklog-prose h1,
+.worklog-prose h2,
+.worklog-prose h3 {
+  color: var(--c-text);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+.worklog-prose h1 { font-size: 1.5em; }
+.worklog-prose h2 { font-size: 1.25em; }
+.worklog-prose h3 { font-size: 1.1em; }
+.worklog-prose ul,
+.worklog-prose ol { padding-left: 1.4rem; }
+.worklog-prose ul { list-style: disc; }
+.worklog-prose ol { list-style: decimal; }
+.worklog-prose li + li { margin-top: 0.25em; }
+.worklog-prose blockquote {
+  border-left: 2px solid var(--c-primary);
+  color: var(--c-text-muted);
+  padding-left: 0.9rem;
+}
+.worklog-prose code {
+  border-radius: var(--radius-xs);
+  background: var(--c-surface-3);
+  color: var(--c-text);
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  padding: 0.12em 0.35em;
+}
+.worklog-prose pre {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  background: var(--c-sidebar);
+  color: var(--c-sidebar-fg);
+  padding: 0.8rem 1rem;
+}
+.worklog-prose pre code {
+  background: transparent;
+  color: inherit;
+  padding: 0;
+}
+
+@media (min-width: 768px) {
+  .dashboard-today-card {
+    display: block;
+    min-height: 100dvh;
+    margin-top: calc(-1 * (5.5rem + 1px + clamp(1rem, 2vw, 1.5rem)));
+    padding-top: calc(5.5rem + 1px);
+  }
+  /* Content area = the screen below the menu, so the 1fr/auto/1fr grid puts
+     the today block at the true vertical centre of what you see. */
+  .dashboard-hero-inner { min-height: calc(100dvh - 5.5rem - 1px); }
+  .dashboard-today-art {
+    position: absolute;
+    inset: 0 0 0 40%;
+    height: auto;
+    /* Framed so the whole mug sits in the clear area; an eased multi-stop
+       fade over the first third melts the plant side into the banner tone
+       with no visible seam. */
+    background-position: 45% 55%;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.08) 6%, rgba(0, 0, 0, 0.25) 12%, rgba(0, 0, 0, 0.5) 18%, rgba(0, 0, 0, 0.78) 24%, rgba(0, 0, 0, 0.94) 29%, #000 33%);
+    mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.08) 6%, rgba(0, 0, 0, 0.25) 12%, rgba(0, 0, 0, 0.5) 18%, rgba(0, 0, 0, 0.78) 24%, rgba(0, 0, 0, 0.94) 29%, #000 33%);
+  }
+}
+
+.app-shell main h1,
+.app-shell main h2,
+.app-shell main h3 { letter-spacing: -0.04em; }
+.app-shell main h1 { font-weight: 750; }
+.app-shell main input,
+.app-shell main textarea,
+.app-shell main select { font-family: inherit; }
+/* Outer page <main> only — a nested <main> must not inherit this spacing. */
+.app-shell main#main { padding-top: clamp(1rem, 2vw, 1.5rem); padding-bottom: clamp(3rem, 6vw, 6rem); }
+.app-shell #app-nav a:focus-visible { outline: 2px solid var(--c-ring); outline-offset: 2px; }
+.app-shell [id] { scroll-margin-top: calc(var(--spacing) * 24); }
+
+/* ============================ RAW TOKENS — DARK =========================== */
+.dark {
+  color-scheme: dark;
+
+  --c-bg: #0b0b0d;
+  --c-surface: #141416;
+  --c-surface-2: #1e1e22;
+  --c-surface-3: #2a2a30;
+  --c-overlay: rgba(0, 0, 0, 0.78);
+
+  --c-text: #f5f5f6;
+  --c-text-muted: #c7c7ce;
+  --c-text-subtle: #9999a3;
+  --c-text-inverse: #0b0b0d;
+
+  --c-border: #35353d;
+  --c-border-strong: #6f6f7c;
+
+  --c-primary: #2dd4bf;
+  --c-primary-strong: #14b8a6; /* bright teal fill; label is near-black, not white */
+  --c-primary-hover: #2dd4bf;
+  --c-primary-active: #5eead4;
+  --c-primary-fg: #042f2c;
+  --c-primary-subtle: #134e4a;
+  --c-accent-text: #5eead4;
+
+  --c-danger: #f87171;
+  --c-danger-fg: #0b1120;
+  --c-danger-subtle: #3f1717;
+  --c-success: #4ade80;
+  --c-success-fg: #0b1120;
+  --c-success-subtle: #0c2e1b;
+  --c-warning: #fbbf24;
+  --c-warning-fg: #0b1120;
+  --c-warning-subtle: #3a2a08;
+  --c-info: #60a5fa;
+  --c-info-fg: #0f172a;
+  --c-info-subtle: #172554;
+
+  --c-ring: #5eead4;
+  --c-ring-offset: var(--c-bg);
+
+  --c-status-open: #c7c7ce;
+  --c-status-open-bg: #242429;
+  --c-status-open-fg: #c7c7ce;
+
+  --c-status-progress: #60a5fa;
+  --c-status-progress-bg: #15264a;
+  --c-status-progress-fg: #93c5fd;
+
+  --c-status-blocked: #f87171;
+  --c-status-blocked-bg: #3f1717;
+  --c-status-blocked-fg: #fca5a5;
+
+  --c-status-waiting: #fbbf24;
+  --c-status-waiting-bg: #3a2a08;
+  --c-status-waiting-fg: #fcd34d;
+
+  --c-status-testing: #a78bfa;
+  --c-status-testing-bg: #2a1c4d;
+  --c-status-testing-fg: #c4b5fd;
+
+  --c-status-completed: #4ade80;
+  --c-status-completed-bg: #0c2e1b;
+  --c-status-completed-fg: #86efac;
+
+  --c-status-closed: #d6d3d1;
+  --c-status-closed-bg: #2c2a28;
+  --c-status-closed-fg: #d6d3d1;
+
+  --c-priority-low: #a1a1aa;
+  --c-priority-low-bg: #242429;
+  --c-priority-medium: #38bdf8;
+  --c-priority-medium-bg: #0c2b3d;
+  --c-priority-high: #fb923c;
+  --c-priority-high-bg: #3a230f;
+  --c-priority-urgent: #fb7185;
+  --c-priority-urgent-bg: #3d1421;
+
+  /* Dark surfaces read elevation from lightness, not shadow. Keep these
+     near-invisible so panels don't smear on OLED/low-light. */
+  --sh-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.40);
+  --sh-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.50);
+  --sh-md: 0 4px 12px -2px rgba(0, 0, 0, 0.55);
+  --sh-lg: 0 12px 32px -8px rgba(0, 0, 0, 0.65);
+}
+
+/* ========================= TAILWIND THEME MAPPING ========================= */
+/* `inline` so the var() indirection resolves at use-site and .dark overrides
+   actually take effect on generated utilities. */
+
+/* ===================== FORCED LIGHT (marketing pages) =====================
+   The reference design (optlify.vercel.app) is light-only. Marketing routes
+   opt out of the dark theme by re-declaring the light raw tokens on a subtree,
+   so they render light even when <html> carries .dark. Pure CSS - no flash,
+   no effect hook. The app shell keeps its light/dark toggle.               */
+.force-light {
+  color-scheme: light;
+  --c-bg: #f8fafc;
+  --c-surface: #ffffff;
+  --c-surface-2: #f1f5f9;
+  --c-surface-3: #e2e8f0;
+  --c-overlay: rgba(15, 23, 42, 0.52);
+  --c-text: #0f172a;
+  --c-text-muted: #475569;
+  --c-text-subtle: #64748b;
+  --c-text-inverse: #ffffff;
+  --c-border: #e2e8f0;        /* dividers, card outlines (decorative) */
+  --c-border-strong: #64748b; /* functional edges: inputs, checkboxes, toggles */
+  --c-primary: #0d9488;
+  --c-primary-strong: #0f766e; /* text-size teal: links, small labels (5.3:1 on white) */
+  --c-primary-hover: #0f766e;
+  --c-primary-active: #115e59;
+  --c-primary-fg: #ffffff;
+  --c-primary-subtle: #ccfbf1;
+  --c-accent-text: #0f766e;
+  --c-danger: #dc2626;
+  --c-danger-fg: #ffffff;
+  --c-danger-subtle: #fde9e9;
+  --c-success: #15803d;
+  --c-success-fg: #ffffff;
+  --c-success-subtle: #dff4e4;
+  --c-warning: #b45309;
+  --c-warning-fg: #ffffff;
+  --c-warning-subtle: #fdf0d8;
+  --c-info: #1d4ed8;
+  --c-info-fg: #ffffff;
+  --c-info-subtle: #dbeafe;
+  --c-ring: #0f766e;
+  --c-ring-offset: var(--c-bg);
+  --c-status-open: #475569;
+  --c-status-open-bg: #f1f5f9;
+  --c-status-open-fg: #475569;
+  --c-status-progress: #2563eb;
+  --c-status-progress-bg: #e6eefe;
+  --c-status-progress-fg: #1d4ed8;
+  --c-status-blocked: #b91c1c;
+  --c-status-blocked-bg: #fde9e9;
+  --c-status-blocked-fg: #b91c1c;
+  --c-status-waiting: #92400e;
+  --c-status-waiting-bg: #fdf0d8;
+  --c-status-waiting-fg: #92400e;
+  --c-status-testing: #6d28d9;
+  --c-status-testing-bg: #f0e9fe;
+  --c-status-testing-fg: #6d28d9;
+  --c-status-completed: #166534;
+  --c-status-completed-bg: #dff4e4;
+  --c-status-completed-fg: #166534;
+  --c-status-closed: #57534e;
+  --c-status-closed-bg: #edeae7;
+  --c-status-closed-fg: #57534e;
+  --c-priority-low: #475569;
+  --c-priority-low-bg: #f1f5f9;
+  --c-priority-medium: #0369a1;
+  --c-priority-medium-bg: #e4f2fb;
+  --c-priority-high: #c2410c;
+  --c-priority-high-bg: #fdeee4;
+  --c-priority-urgent: #be123c;
+  --c-priority-urgent-bg: #fde8ed;
+  --sh-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --sh-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
+  --sh-md: 0 4px 12px -2px rgba(15, 23, 42, 0.10), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+  --sh-lg: 0 12px 32px -8px rgba(15, 23, 42, 0.18), 0 4px 8px -4px rgba(15, 23, 42, 0.08);
+}
+
+@theme inline {
+  /* ---- Colors ---- */
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-surface);
+  --color-surface-2: var(--c-surface-2);
+  --color-surface-3: var(--c-surface-3);
+  --color-card: var(--c-card);
+  --color-card-tint: var(--c-card-tint);
+  --color-card-navy: var(--c-card-navy);
+  --color-overlay: var(--c-overlay);
+
+  --color-text: var(--c-text);
+  --color-text-muted: var(--c-text-muted);
+  --color-text-subtle: var(--c-text-subtle);
+  --color-text-inverse: var(--c-text-inverse);
+
+  --color-border: var(--c-border);
+  --color-border-strong: var(--c-border-strong);
+
+  --color-primary: var(--c-primary);
+  --color-primary-strong: var(--c-primary-strong);
+  --color-primary-hover: var(--c-primary-hover);
+  --color-primary-active: var(--c-primary-active);
+  --color-primary-fg: var(--c-primary-fg);
+  --color-primary-subtle: var(--c-primary-subtle);
+  --color-accent-text: var(--c-accent-text);
+
+  --color-sidebar: var(--c-sidebar);
+  --color-sidebar-2: var(--c-sidebar-2);
+  --color-sidebar-3: var(--c-sidebar-3);
+  --color-sidebar-fg: var(--c-sidebar-fg);
+  --color-sidebar-muted: var(--c-sidebar-muted);
+  --color-sidebar-subtle: var(--c-sidebar-subtle);
+  --color-sidebar-border: var(--c-sidebar-border);
+  --color-sidebar-accent: var(--c-sidebar-accent);
+  --color-sidebar-accent-bg: var(--c-sidebar-accent-bg);
+
+  --color-danger: var(--c-danger);
+  --color-danger-fg: var(--c-danger-fg);
+  --color-danger-subtle: var(--c-danger-subtle);
+  --color-success: var(--c-success);
+  --color-success-fg: var(--c-success-fg);
+  --color-success-subtle: var(--c-success-subtle);
+  --color-warning: var(--c-warning);
+  --color-warning-fg: var(--c-warning-fg);
+  --color-warning-subtle: var(--c-warning-subtle);
+  --color-info: var(--c-info);
+  --color-info-fg: var(--c-info-fg);
+  --color-info-subtle: var(--c-info-subtle);
+
+  --color-ring: var(--c-ring);
+
+  --color-status-open: var(--c-status-open);
+  --color-status-open-bg: var(--c-status-open-bg);
+  --color-status-open-fg: var(--c-status-open-fg);
+  --color-status-progress: var(--c-status-progress);
+  --color-status-progress-bg: var(--c-status-progress-bg);
+  --color-status-progress-fg: var(--c-status-progress-fg);
+  --color-status-blocked: var(--c-status-blocked);
+  --color-status-blocked-bg: var(--c-status-blocked-bg);
+  --color-status-blocked-fg: var(--c-status-blocked-fg);
+  --color-status-waiting: var(--c-status-waiting);
+  --color-status-waiting-bg: var(--c-status-waiting-bg);
+  --color-status-waiting-fg: var(--c-status-waiting-fg);
+  --color-status-testing: var(--c-status-testing);
+  --color-status-testing-bg: var(--c-status-testing-bg);
+  --color-status-testing-fg: var(--c-status-testing-fg);
+  --color-status-completed: var(--c-status-completed);
+  --color-status-completed-bg: var(--c-status-completed-bg);
+  --color-status-completed-fg: var(--c-status-completed-fg);
+  --color-status-closed: var(--c-status-closed);
+  --color-status-closed-bg: var(--c-status-closed-bg);
+  --color-status-closed-fg: var(--c-status-closed-fg);
+
+  --color-priority-low: var(--c-priority-low);
+  --color-priority-low-bg: var(--c-priority-low-bg);
+  --color-priority-medium: var(--c-priority-medium);
+  --color-priority-medium-bg: var(--c-priority-medium-bg);
+  --color-priority-high: var(--c-priority-high);
+  --color-priority-high-bg: var(--c-priority-high-bg);
+  --color-priority-urgent: var(--c-priority-urgent);
+  --color-priority-urgent-bg: var(--c-priority-urgent-bg);
+
+  /* ---- Fonts ----
+     Network-independent stacks keep production builds reliable. Manrope and
+     JetBrains Mono are preferred when installed; native fallbacks preserve
+     the same geometric sans / legible mono character. */
+  --font-sans: var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui,
+    -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", "SFMono-Regular",
+    "SF Mono", Menlo, Consolas, monospace;
+
+  /* ---- Type scale (dense-UI: base is 14px, not 16px) ---- */
+  --text-2xs: 0.6875rem;    /* 11 — uppercase micro-labels only, +0.06em tracking */
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;       /* 12 — meta, timestamps, table captions */
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.8125rem;     /* 13 — table cells, badges, sidebar */
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.875rem;    /* 14 — app default body */
+  --text-base--line-height: 1.4286;
+  --text-md: 0.9375rem;     /* 15 — long-form: work log notes, ticket descriptions */
+  --text-md--line-height: 1.6;
+  --text-lg: 1rem;          /* 16 — card titles, section leads */
+  --text-lg--line-height: 1.5rem;
+  --text-xl: 1.125rem;      /* 18 — h3 */
+  --text-xl--line-height: 1.625rem;
+  --text-2xl: 1.25rem;      /* 20 — h2 */
+  --text-2xl--line-height: 1.75rem;
+  --text-3xl: 1.5rem;       /* 24 — h1 / page title */
+  --text-3xl--line-height: 2rem;
+  --text-4xl: 1.875rem;     /* 30 — dashboard metric numerals */
+  --text-4xl--line-height: 2.25rem;
+  --text-5xl: 2.25rem;      /* 36 — auth screens only */
+  --text-5xl--line-height: 2.5rem;
+
+  /* Marketing display sizes — PUBLIC PAGES ONLY (app/(marketing)/**).
+     The app UI stops at --text-4xl; a landing hero needs real display type.
+     Tracking is tightened at these sizes via `tracking-tight`/`-tighter`. */
+  --text-6xl: 2.75rem;      /* 44 — marketing section headline (h2) */
+  --text-6xl--line-height: 1.08;
+  --text-7xl: 3.25rem;      /* 52 — marketing hero at md */
+  --text-7xl--line-height: 1.04;
+  --text-8xl: 3.75rem;      /* 60 — marketing hero at lg+ */
+  --text-8xl--line-height: 1.02;
+
+  /* ---- Spacing: 4px base -> 4/8/12/16/24/32/48/64 via 1/2/3/4/6/8/12/16 ---- */
+  --spacing: 0.25rem;
+
+  /* ---- Radii ---- */
+  --radius-xs: 0.1875rem;  /* 3  — dots, tiny chips */
+  --radius-sm: 0.25rem;    /* 4  — badges, tags */
+  --radius-md: 0.375rem;   /* 6  — inputs, buttons, menu items */
+  --radius-lg: 0.5rem;     /* 8  — cards, panels */
+  --radius-xl: 0.75rem;    /* 12 — dialogs, command palette */
+  --radius-2xl: 1rem;      /* 16 — max; nothing rounder */
+
+  /* ---- Shadows ---- */
+  --shadow-xs: var(--sh-xs);
+  --shadow-sm: var(--sh-sm);
+  --shadow-md: var(--sh-md);
+  --shadow-lg: var(--sh-lg);
+
+  /* ---- Breakpoints: exactly four. 360 / 768 / 1024 / 1440 ---- */
+  --breakpoint-*: initial;
+  --breakpoint-xs: 22.5rem;  /*  360 */
+  --breakpoint-md: 48rem;    /*  768 */
+  --breakpoint-lg: 64rem;    /* 1024 */
+  --breakpoint-xl: 90rem;    /* 1440 */
+
+  /* ---- Motion (flat design: fast, functional, no choreography) ---- */
+  --ease-out-quick: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-section: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* Shared motion rhythm. Marketing may use the longer reveal/section tokens;
+     dense app controls stay on fast/state. */
+  --motion-fast: 150ms;
+  --motion-state: 200ms;
+  --motion-reveal: 350ms;
+  --motion-reveal-exit: 180ms;
+  --motion-section: 400ms;
+  --motion-stagger: 40ms;
+  --motion-reveal-y: 0.75rem;
+  --motion-reveal-scale: 0.97;
+}
+
+/* ============================== BASE LAYER ================================ */
+@layer base {
+  html {
+    /* Keep anchor targets below the sticky app navigation and preserve
+       keyboard focus visibility (WCAG 2.2 AA 2.4.11). */
+    scroll-padding-top: calc(var(--spacing) * 24);
+  }
+
+  body {
+    background-color: var(--c-bg);
+    color: var(--c-text);
+    overflow-x: hidden;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--text-base--line-height);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-variant-numeric: tabular-nums; /* columns of dates/counts stay aligned */
+  }
+
+  /* Ticket IDs, code, timestamps in tables. */
+  code, kbd, samp, pre {
+    font-family: var(--font-mono);
+    font-variant-ligatures: none; /* never ligate inside an ID like ASU-1234 */
+  }
+
+  /* Single global focus spec. Never remove it; override it here if ever. */
+  :focus-visible {
+    outline: 2px solid var(--c-ring);
+    outline-offset: 2px;
+    /* No `border-radius` here: it would override the element's own radius and
+       visibly reshape a focused input/button. The outline follows the element. */
+  }
+  /* Mouse users don't get the ring, but :focus-visible must never be suppressed. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: var(--c-primary-subtle);
+    color: var(--c-text);
+  }
+
+  ::placeholder {
+    color: var(--c-text-subtle);
+    opacity: 1;
+  }
+
+  /* Scrollbars — long sessions, lots of scrolling. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--c-border-strong) transparent;
+  }
+
+  hr {
+    border-color: var(--c-border);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Motion primitives-inspired app motion. Keep transforms/opacity only so
+   dense work surfaces stay responsive and composited. */
+@keyframes app-reveal-up {
+  from { opacity: 0; transform: translate3d(0, var(--motion-reveal-y), 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.motion-page-enter {
+  animation: app-reveal-up var(--motion-reveal) var(--ease-out-quick) both;
+}
+
+.motion-stagger {
+  animation: app-reveal-up var(--motion-reveal) var(--ease-out-quick) both;
+  animation-delay: calc(var(--motion-index, 0) * var(--motion-stagger));
+}
+
+.motion-lift {
+  transition:
+    transform var(--motion-state) var(--ease-standard),
+    border-color var(--motion-state) var(--ease-standard),
+    background-color var(--motion-state) var(--ease-standard),
+    box-shadow var(--motion-state) var(--ease-standard);
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .motion-lift:hover {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+.motion-disclosure-content {
+  animation: app-reveal-up var(--motion-state) var(--ease-out-quick) both;
+}
+
+/* ---- Scroll-driven reveals -------------------------------------------------
+   Sections and cards fade/rise as they enter the viewport and settle once fully
+   in view. Driven by the scroll timeline, not JavaScript: no observer, no
+   layout reads, and the animation is tied to scroll position so it plays in
+   both directions. Browsers without `animation-timeline` simply render the
+   element at its resting state — the @supports guard is what makes that safe,
+   so never move these rules outside it. */
+@keyframes app-scroll-in {
+  /* `translate`/`scale` rather than `transform`: they compose independently, so
+     a card can still run its `transform` hover lift while this animation holds
+     its resting position. Using `transform` here would silently kill the lift. */
+  from {
+    opacity: 0;
+    translate: 0 calc(var(--motion-reveal-y) * 1.6);
+    scale: 0.985;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-reveal {
+      animation: app-scroll-in linear both;
+      animation-timeline: view();
+      /* Starts as the element's top edge enters, done well before it centres. */
+      animation-range: entry 0% cover 26%;
+    }
+
+    /* A row of cards: each one runs on its own timeline, so scrolling a list
+       cascades naturally without hand-tuned delays. */
+    .scroll-reveal-item {
+      animation: app-scroll-in linear both;
+      animation-timeline: view();
+      animation-range: entry 8% cover 22%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-page-enter,
+  .motion-stagger,
+  .motion-disclosure-content,
+  .scroll-reveal,
+  .scroll-reveal-item {
+    animation: none;
+  }
+
+  .motion-lift,
+  .motion-lift:hover {
+    transform: none;
+  }
+}
+
+/* Homepage-only native document scrolling: exactly three snap targets. */
+html:has(.marketing-document) {
+  scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  scroll-padding-top: 0;
+}
+
+body:has(.marketing-document) {
+  overscroll-behavior-y: none;
+}
+
+.marketing-snap-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.marketing-nav-link {
+  transition:
+    color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard);
+}
+
+.marketing-nav-link::after {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.25rem;
+  left: 0.25rem;
+  height: 2px;
+  border-radius: var(--radius-xs);
+  background: var(--c-primary);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--motion-state) var(--ease-standard);
+}
+
+.marketing-nav-link[data-active="true"] {
+  color: var(--c-primary-strong);
+}
+
+.marketing-nav-link[data-active="true"]::after {
+  transform: scaleX(1);
+}
+
+@keyframes marketing-menu-in {
+  from { opacity: 0; transform: translate3d(0, -0.75rem, 0) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.marketing-mobile-menu {
+  animation: marketing-menu-in var(--motion-state) var(--ease-out-quick) both;
+  transform-origin: top center;
+}
+
+/* ==========================================================================
+   MARKETING MOTION LAYER — public pages only, additive.
+   Used by app/(marketing)/** and components/marketing/**. Nothing here
+   changes an existing token value.
+
+   Every duration and easing below is taken from
+   `.claude/skills/ui-ux-pro-max/data/motion.csv`, with the GSAP eases written
+   as their CSS cubic-bezier equivalents (rows used: 1 Hover/Subtle,
+   2 Hover/Standard, 4 Scroll Reveal/Subtle, 5 Scroll Reveal/Standard,
+   8 Stagger List/Standard, 9 Stagger List/Complex).
+
+   HARD RULES (design.md §7 + motion.csv performance notes):
+     - transform + opacity ONLY. Never width/height/top/left.
+     - Content is visible by default. A scoped IntersectionObserver arms and
+       toggles reveal state only after it is ready, so no-JS remains readable.
+   ========================================================================== */
+
+@theme {
+  /* GSAP ease -> CSS cubic-bezier. New tokens; nothing overridden. */
+  --ease-power1-out: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* gsap power1.out */
+  --ease-power2-out: cubic-bezier(0.215, 0.61, 0.355, 1); /* gsap power2.out */
+  --ease-expo-out: cubic-bezier(0.19, 1, 0.22, 1); /* gsap expo.out */
+
+  /* One display step above --text-8xl, for the redesigned hero only. */
+  --text-9xl: 4.5rem; /* 72 — marketing hero at xl */
+  --text-9xl--line-height: 0.98;
+}
+
+/* ------------------------------- SCROLL REVEAL ---------------------------- */
+/* Reveal states replay on viewport entry after RevealController arms them.
+   The unarmed baseline has no opacity/transform rule and is therefore the
+   fully visible, resilient no-JS state. */
+
+@media (prefers-reduced-motion: no-preference) {
+  .marketing-document[data-motion-ready] [data-reveal],
+  .marketing-document[data-motion-ready] [data-word-rise] > span {
+    opacity: 0;
+    transform: translate3d(0, var(--reveal-y, 0.75rem), 0)
+      scale(var(--reveal-scale, 1));
+    transition:
+      opacity 180ms var(--ease-standard),
+      transform 180ms var(--ease-standard);
+  }
+
+  .marketing-document[data-motion-ready] [data-reveal][data-in-view] {
+    opacity: 1;
+    transform: none;
+    transition-duration: var(--motion-reveal);
+    transition-timing-function: var(--ease-power1-out);
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+
+  /* motion.csv row 4 — Subtle: 300-400ms, power1.out, y 8-16px
+     ("reads as a fade, not a slide"). Section eyebrows and leads. */
+  [data-reveal="fade"] {
+    --reveal-y: 0.75rem;
+  }
+
+  /* Image/card entrances get slight depth without exceeding the 12px offset. */
+  [data-reveal="pop"] {
+    --reveal-y: 0.75rem;
+    --reveal-scale: 0.97;
+  }
+}
+
+/* ----------------------------- BACKGROUND LAYER --------------------------- */
+/* Static composited shapes replace animated blur, which was expensive during
+   snap scrolling. The grid and arcs add depth without repainting each frame. */
+.pw-orb {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.28;
+}
+
+/* Ruled-paper dot grid. Masked so it fades out rather than ending in a line. */
+.pw-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in srgb, var(--c-primary) 26%, transparent) 1px,
+    transparent 0
+  );
+  background-size: 28px 28px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, #000 20%, transparent 75%);
+}
+
+.pw-grid-soft {
+  opacity: 0.35;
+  mask-image: linear-gradient(to bottom, transparent, #000 35%, transparent);
+}
+
+.pw-arc {
+  position: absolute;
+  width: 18rem;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--c-primary) 28%, transparent);
+  border-radius: 50%;
+}
+
+.pw-arc-a { top: 18%; right: 4%; }
+.pw-arc-b { top: 24%; right: 9%; width: 12rem; }
+.pw-arc-c { bottom: -5rem; left: -4rem; width: 22rem; }
+.pw-arc-d { top: 16%; right: -6rem; width: 24rem; }
+
+/* ------------------------- HERO HEADLINE WORD RISE ------------------------ */
+/* motion.csv row 9 — Stagger List / Complex: expo.out, 400-700ms.
+   Deliberate deviation: the row splits by CHARACTER at 0.015s. We split by
+   WORD at 0.05s instead — same effect, ~7 nodes instead of ~60, and the
+   headline stays selectable and readable to assistive tech. Row 9's "Don't"
+   ("don't split-animate long paragraphs; reserve for short headlines under
+   ~8 words") is respected: this is used on the h1 only. */
+@media (prefers-reduced-motion: no-preference) {
+  .marketing-document[data-motion-ready] [data-word-rise][data-in-view] > span {
+    opacity: 1;
+    transform: none;
+    transition-duration: var(--motion-reveal);
+    transition-timing-function: var(--ease-expo-out);
+    transition-delay: var(--word-delay, 0ms);
+  }
+}
+
+/* --------------------------- REDUCED MOTION RESET ------------------------- */
+/* If a user flips the OS setting mid-session, force final readable states. */
+@media (prefers-reduced-motion: reduce) {
+  html:has(.marketing-document) { scroll-behavior: auto !important; }
+
+  .marketing-mobile-menu {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .marketing-nav-link,
+  .marketing-nav-link::after {
+    transition: none !important;
+  }
+
+  [data-reveal] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  [data-word-rise] > span {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+}
+
+/* ---------------------------------------------------------------------------
+   Note rich text — `.note-prose`
+   Ported from the Nexa project (app/globals.css) alongside the notes editor.
+   Shared by the TipTap editor body and the read-only viewer.
+
+   Nexa's semantic variables were remapped onto this app's raw tokens
+   (--color-text -> --c-text and so on), so the prose follows THIS palette and
+   its dark mode. The --code-* set below is self-contained and came across
+   as-is: those colours are tuned against --code-bg, not against the page.
+   When re-syncing from Nexa, redo that mapping rather than pasting raw.
+--------------------------------------------------------------------------- */
+
+
+.note-prose {
+  color: var(--c-text);
+  font-size: 15.5px;
+  line-height: 1.7;
+  /* a comfortable measure; the container still governs the outer width */
+  max-width: 72ch;
+  overflow-wrap: anywhere;
+}
+
+.note-prose > * + * {
+  margin-top: 0.9em;
+}
+
+.note-prose :focus-visible {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+}
+
+/* headings ---------------------------------------------------------------- */
+
+.note-prose h1,
+.note-prose h2,
+.note-prose h3 {
+  color: var(--c-text);
+  font-weight: 650;
+  letter-spacing: -0.018em;
+  line-height: 1.25;
+  scroll-margin-top: 80px;
+}
+
+.note-prose h1 {
+  font-size: 1.72em;
+}
+
+.note-prose h2 {
+  font-size: 1.34em;
+}
+
+.note-prose h3 {
+  font-size: 1.12em;
+}
+
+.note-prose > h1 + *,
+.note-prose > h2 + *,
+.note-prose > h3 + * {
+  margin-top: 0.5em;
+}
+
+.note-prose > * + h1,
+.note-prose > * + h2,
+.note-prose > * + h3 {
+  margin-top: 1.6em;
+}
+
+/* inline ------------------------------------------------------------------ */
+
+.note-prose strong {
+  font-weight: 650;
+}
+
+.note-prose a {
+  color: var(--c-primary-strong);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--c-primary-strong) 35%, transparent);
+  text-underline-offset: 2px;
+  transition: text-decoration-color 150ms var(--ease-out-quick);
+}
+
+.note-prose a:hover {
+  text-decoration-color: var(--c-primary-strong);
+}
+
+.note-prose mark {
+  background-color: var(--c-surface-2);
+  color: var(--c-text);
+  border-radius: 3px;
+  padding: 0.1em 0.22em;
+}
+
+.note-prose code {
+  background-color: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: 5px;
+  padding: 0.12em 0.36em;
+  font-size: 0.88em;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* lists ------------------------------------------------------------------- */
+
+.note-prose ul,
+.note-prose ol {
+  padding-left: 1.35em;
+}
+
+.note-prose ul {
+  list-style: disc;
+}
+
+.note-prose ol {
+  list-style: decimal;
+}
+
+.note-prose ul ul {
+  list-style: circle;
+}
+
+.note-prose li {
+  margin-top: 0.28em;
+}
+
+.note-prose li p {
+  margin: 0;
+}
+
+.note-prose li::marker {
+  color: var(--c-text-subtle);
+}
+
+/* checklists — TipTap's TaskList emits ul[data-type=taskList] > li > label+div */
+
+.note-prose ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.note-prose ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6em;
+}
+
+.note-prose ul[data-type="taskList"] li > label {
+  display: inline-flex;
+  align-items: center;
+  /* line the box up with the first line of text rather than its cap height */
+  margin-top: 0.28em;
+  user-select: none;
+}
+
+.note-prose ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.note-prose ul[data-type="taskList"] input[type="checkbox"] {
+  accent-color: var(--c-primary-strong);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.note-prose ul[data-type="taskList"] li[data-checked="true"] > div {
+  color: var(--c-text-subtle);
+  text-decoration: line-through;
+}
+
+/* blocks ------------------------------------------------------------------ */
+
+.note-prose blockquote {
+  border-left: 2.5px solid var(--c-surface-2);
+  padding-left: 1em;
+  color: var(--c-text-muted);
+  font-style: normal;
+}
+
+.note-prose hr {
+  border: 0;
+  border-top: 1px solid var(--c-border);
+  margin-block: 1.8em;
+}
+
+/* code blocks ------------------------------------------------------------- */
+
+/*
+  Code blocks are the one deliberately dark surface in an otherwise light
+  document. Syntax highlighting needs ~8 hues that stay distinguishable from
+  each other AND legible against their ground; the page palette only carries
+  two or three usable accents, so pinning tokens to it (as this did) left
+  keywords, strings and numbers as near-identical teals. These are their own
+  tokens, tuned as a set against `--code-bg`, and every one clears 4.5:1 on it.
+*/
+:root {
+  --code-bg: #14181f;
+  --code-fg: #e4e9f2;
+  --code-line: rgba(255, 255, 255, 0.1);
+  --code-muted: #8b98ad;
+  --code-keyword: #ff9ec4;
+  --code-string: #a5e0a0;
+  --code-number: #ffc48c;
+  --code-fn: #93c5fd;
+  --code-type: #d6b4fe;
+  --code-attr: #f3d38a;
+  --code-builtin: #7fdbd4;
+}
+
+.note-prose pre {
+  background-color: var(--code-bg);
+  border: 1px solid var(--code-line);
+  border-radius: 12px;
+  padding: 1rem 1.1rem;
+  overflow-x: auto;
+  font-size: 13.5px;
+  line-height: 1.65;
+  tab-size: 2;
+  color: var(--code-fg);
+}
+
+.note-prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+  color: var(--code-fg);
+  white-space: pre;
+  /* the caret is repainted too — the default black one vanishes on this ground */
+  caret-color: var(--code-fg);
+}
+
+.note-prose pre ::selection {
+  background-color: rgba(147, 197, 253, 0.3);
+  color: inherit;
+}
+
+/* lowlight / highlight.js token classes */
+.note-prose .hljs-comment,
+.note-prose .hljs-quote {
+  color: var(--code-muted);
+  font-style: italic;
+}
+
+.note-prose .hljs-keyword,
+.note-prose .hljs-selector-tag,
+.note-prose .hljs-literal,
+.note-prose .hljs-doctag {
+  color: var(--code-keyword);
+}
+
+.note-prose .hljs-type,
+.note-prose .hljs-class .hljs-title,
+.note-prose .hljs-title.class_ {
+  color: var(--code-type);
+}
+
+.note-prose .hljs-string,
+.note-prose .hljs-regexp,
+.note-prose .hljs-meta .hljs-string {
+  color: var(--code-string);
+}
+
+.note-prose .hljs-number,
+.note-prose .hljs-symbol,
+.note-prose .hljs-bullet,
+.note-prose .hljs-link {
+  color: var(--code-number);
+}
+
+.note-prose .hljs-title,
+.note-prose .hljs-title.function_,
+.note-prose .hljs-section,
+.note-prose .hljs-name,
+.note-prose .hljs-selector-id,
+.note-prose .hljs-selector-class {
+  color: var(--code-fn);
+  font-weight: 600;
+}
+
+.note-prose .hljs-attr,
+.note-prose .hljs-attribute,
+.note-prose .hljs-variable,
+.note-prose .hljs-template-variable,
+.note-prose .hljs-property,
+.note-prose .hljs-params {
+  color: var(--code-attr);
+}
+
+.note-prose .hljs-built_in,
+.note-prose .hljs-meta {
+  color: var(--code-builtin);
+}
+
+.note-prose .hljs-emphasis {
+  font-style: italic;
+}
+
+.note-prose .hljs-strong {
+  font-weight: 650;
+}
+
+.note-prose .hljs-deletion {
+  color: #ff8b98;
+}
+
+.note-prose .hljs-addition {
+  color: var(--code-string);
+}
+
+/* room for the language picker and copy button in the editor node view */
+.note-prose .note-code-block > pre {
+  padding-top: 2.8rem;
+}
+
+/* tables ------------------------------------------------------------------ */
+
+/*
+  ProseMirror wraps tables in .tableWrapper and the extension is configured to
+  emit the same wrapper in static HTML, so a wide table scrolls inside itself
+  instead of pushing the page sideways.
+*/
+.note-prose .tableWrapper {
+  overflow-x: auto;
+  max-width: 100%;
+  margin-block: 1.1em;
+  -webkit-overflow-scrolling: touch;
+}
+
+.note-prose table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  min-width: 480px;
+  font-size: 14.5px;
+}
+
+.note-prose th,
+.note-prose td {
+  border: 1px solid var(--c-border);
+  padding: 0.5em 0.7em;
+  vertical-align: top;
+  text-align: left;
+  position: relative;
+  min-width: 3em;
+}
+
+.note-prose th {
+  background-color: var(--c-surface-2);
+  font-weight: 600;
+}
+
+.note-prose th > p,
+.note-prose td > p {
+  margin: 0;
+}
+
+/* ProseMirror table affordances — inert in the read-only viewer */
+.note-prose .selectedCell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: color-mix(in srgb, var(--c-surface-2) 55%, transparent);
+  pointer-events: none;
+}
+
+.note-prose .column-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: -2px;
+  width: 4px;
+  background-color: var(--c-primary);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Editor-only chrome for `.note-prose`
+--------------------------------------------------------------------------- */
+
+.note-editor-body {
+  outline: none;
+  /* the wrapper draws the focus border, so the contenteditable draws none */
+}
+
+.note-editor-body.ProseMirror-focused {
+  outline: none;
+}
+
+.note-editor-body p.is-editor-empty:first-child::before,
+.note-editor-body .is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--c-text-subtle);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.note-editor-body .ProseMirror-gapcursor::after {
+  border-top-color: var(--c-text);
+}
+
+.note-editor-body .ProseMirror-selectednode {
+  outline: 2px solid var(--c-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.note-editor-body.resize-cursor {
+  cursor: col-resize;
+}
+
+/* ==========================================================================
+   MARKETING WORLD — "The Commit Graph"
+   Public pages only (`.marketing-document`). Seed c0fbca57; direction contract
+   in `.impeccable/surfaces/src-app-marketing-page-tsx.md`.
+
+   The world is version-control history as a graphic system: a continuous
+   commit spine, diff-gutter marks, tabular ids and dates. It deliberately
+   refuses GitHub's skin — the ink ground carries a violet cast, the addition
+   accent is a plotter lime rather than a signal green, and the deletion red
+   appears exactly ONCE on the page, struck through, to show the one thing this
+   product will not do.
+
+   Implemented by REDEFINING the `--c-*` raw tokens on the marketing wrapper,
+   so every existing token utility (`bg-bg`, `text-text`, `bg-primary`, …)
+   renders the new world inside it and the authenticated app is untouched.
+   ========================================================================== */
+
+.marketing-document {
+  color-scheme: light;
+
+  /* Paper-and-ink rendition. Cool paper with a violet cast — not cream. */
+  --c-bg: #f3f2f6;
+  --c-surface: #ffffff;
+  --c-surface-2: #e9e7ef;
+  --c-surface-3: #ddd9e6;
+
+  --c-text: #14121c;
+  --c-text-muted: #55506a;   /* 6.87:1 on paper — measured */
+  --c-text-subtle: #6b6683;  /* 4.89:1 on paper — measured */
+  --c-text-inverse: #f7f6fa;
+
+  --c-border: #d8d4e3;
+  --c-border-strong: #6b6683;
+
+  /* Addition is the only accent that carries weight. Lime reads as a plotter
+     ink, not a status green; the text-weight value is darkened to clear AA. */
+  --c-primary: #79c23c;
+  --c-primary-strong: #45731a;  /* 5.06:1 on paper, measured — links and small labels */
+  --c-primary-hover: #3f6a14;
+  --c-primary-active: #35590f;
+  --c-primary-fg: #12160b;
+  --c-primary-subtle: #e7f5d8;
+  --c-accent-text: #3f6a14;
+
+  --c-ring: #4a7c18;
+  --c-ring-offset: var(--c-bg);
+
+  /* World-specific. Branch ramp for the spine; deletion is used once. */
+  --m-spine: #bcb6cf;
+  --m-node: #14121c;
+  --m-branch-a: #4a7c18;
+  --m-branch-b: #7b4bc4;
+  --m-branch-c: #b7761a;
+  --m-del: #c62828;
+  --m-gutter-add-bg: #e7f5d8;
+
+  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+}
+
+.dark .marketing-document {
+  color-scheme: dark;
+
+  /* Ink ground with a violet cast, drenched. The scene is a developer at the
+     end of a working block with an editor already open; that room is dark. */
+  --c-bg: #13111c;
+  --c-surface: #1b1827;
+  --c-surface-2: #221e31;
+  --c-surface-3: #2c2740;
+
+  --c-text: #efecf5;
+  --c-text-muted: #a8a2bc;   /* 7.4:1 on ink */
+  --c-text-subtle: #8b849f;  /* 4.9:1 on ink */
+  --c-text-inverse: #13111c;
+
+  --c-border: #322c45;
+  --c-border-strong: #6d6584;
+
+  --c-primary: #9be564;
+  --c-primary-strong: #9be564;
+  --c-primary-hover: #aeef7e;
+  --c-primary-active: #c2f79b;
+  --c-primary-fg: #12160b;
+  --c-primary-subtle: #24331a;
+  --c-accent-text: #b6ef8a;
+
+  --c-ring: #9be564;
+
+  --m-spine: #473f63;
+  --m-node: #efecf5;
+  --m-branch-a: #9be564;
+  --m-branch-b: #c792ea;
+  --m-branch-c: #ffb454;
+  --m-del: #ff6b6b;
+  --m-gutter-add-bg: #1f2d15;
+}
+
+/* The new homepage is a continuous scroll, not three snap targets. */
+html:has(.marketing-document) {
+  scroll-snap-type: none;
+}
+
+/* ---- Type ---------------------------------------------------------------
+   Display is a grotesque with character, never the monospace: mono as a
+   costume for "technical" is a refusal. Martian Mono is confined to actual
+   data — commit ids, dates, counts — where tabular figures do real work. */
+
+.marketing-document .m-display {
+  font-family: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 0.96;
+  text-wrap: balance;
+}
+
+.marketing-document .m-data {
+  font-family: var(--font-martian-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "calt" 0;
+  letter-spacing: -0.02em;
+}
+
+/* ---- Browser surfaces ---------------------------------------------------
+   The parts not drawn by hand still carry the design: selection, caret,
+   scrollbar, focus ring and underline offset all ship with defaults that
+   belong to no design system. */
+
+.marketing-document ::selection {
+  background: var(--c-primary);
+  color: var(--c-primary-fg);
+}
+
+.marketing-document {
+  caret-color: var(--c-primary-strong);
+  scrollbar-color: var(--m-spine) transparent;
+  scrollbar-width: thin;
+}
+
+.marketing-document ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.marketing-document ::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--m-spine);
+  background-clip: content-box;
+}
+
+.marketing-document ::-webkit-scrollbar-thumb:hover {
+  background: var(--c-border-strong);
+  background-clip: content-box;
+}
+
+.marketing-document :focus-visible {
+  outline: 2px solid var(--c-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.marketing-document a:not([class*="no-underline"]):hover {
+  text-underline-offset: 0.25em;
+  text-decoration-thickness: 1px;
+}
+
+/* ---- The authored moment ------------------------------------------------
+   ONE moment, not an entrance on every section: the spine draws itself as the
+   page is read. Everything else is already visible. The stroke length is set
+   from JS-free CSS via pathLength="1" on the path. */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The straight rail draws in LAYOUT space — no dash arithmetic. A dash
+     pattern cannot survive `non-scaling-stroke`, which measures it in screen
+     pixels and so ignores pathLength entirely. */
+  .m-spine-draw {
+    transform: scaleY(0);
+    transform-origin: top center;
+    animation: m-draw-rail linear both;
+    animation-timeline: view();
+    /* Complete as the segment finishes entering, so a section is never read
+       with a half-drawn spine beside it. */
+    animation-range: entry 0% entry 100%;
+  }
+
+  /* The merge curve is a real curve at a fixed 1:1 size, so pathLength
+     normalization does reach its dash array. */
+  .m-spine-path {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: m-draw linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 100%;
+  }
+
+  .m-node-pop {
+    scale: 0.4;
+    opacity: 0;
+    animation: m-node-in 420ms cubic-bezier(0.19, 1, 0.22, 1) both;
+    animation-timeline: view();
+    animation-range: entry 10% entry 90%;
+  }
+}
+
+@keyframes m-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes m-draw-rail {
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes m-node-in {
+  to {
+    scale: 1;
+    opacity: 1;
+  }
+}
+
+/* The strike in the amend attempt — the page's only use of the deletion
+   colour, and it resolves rather than persisting. */
+.marketing-document .m-strike::after {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--m-del);
+  content: "";
+  transform-origin: left center;
+  animation: m-strike-through 620ms cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+@keyframes m-strike-through {
+  0% {
+    transform: scaleX(0);
+    opacity: 1;
+  }
+  55% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marketing-document .m-strike::after {
+    animation: none;
+    opacity: 0;
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-19T00:00:00+05:30",
+  "title": "Design System: Personal Workspace — The Quiet Studio",
+  "extensions": {
+    "scope": {
+      "world": "The Quiet Studio",
+      "appliesTo": ".portfolio-page on the public homepage and /banner review route",
+      "mechanism": "Homepage tokens are --pf-* custom properties defined on .portfolio-page and overridden by .dark .portfolio-page in src/app/banner/banner.css.",
+      "coexistsWith": "The authenticated app's established semantic-token and teal product system. The homepage world does not replace, extend, or harmonize that system."
+    },
+    "colorMeta": {
+      "warm-paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "#f6f5f2",
+        "purpose": "Daylight homepage ground and the neutral mixed into the hero's light overlay.",
+        "tonalRamp": ["#211f1c", "#403d37", "#625e56", "#878278", "#ada89e", "#d3d0c9", "#e9e7e2", "#f6f5f2"]
+      },
+      "midnight-paper": {
+        "role": "neutral",
+        "displayName": "Midnight Paper",
+        "canonical": "#101214",
+        "purpose": "Night homepage ground and the neutral mixed into the hero's dark overlay.",
+        "tonalRamp": ["#101214", "#1c2024", "#2b3035", "#464c52", "#697077", "#969ba1", "#c7c9cc", "#f1f2f2"]
+      },
+      "warm-surface-2": {
+        "role": "neutral",
+        "displayName": "Warm Surface Two",
+        "canonical": "#eceae5",
+        "purpose": "Daylight hover fill and quiet interaction well.",
+        "tonalRamp": ["#24221e", "#46433d", "#69655d", "#8e8980", "#b3afa7", "#d2cfc9", "#e2dfda", "#eceae5"]
+      },
+      "midnight-surface-2": {
+        "role": "neutral",
+        "displayName": "Midnight Surface Two",
+        "canonical": "#1c2024",
+        "purpose": "Night hover fill and quiet interaction well.",
+        "tonalRamp": ["#101214", "#1c2024", "#30363c", "#4d545b", "#727980", "#a0a5aa", "#ced1d3", "#f3f4f4"]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "#11151b",
+        "purpose": "Daylight headings, navigation, body copy, and brand.",
+        "tonalRamp": ["#11151b", "#222a34", "#394451", "#596572", "#7e8994", "#aab2b9", "#d2d6da", "#f5f6f7"]
+      },
+      "chalk": {
+        "role": "primary",
+        "displayName": "Chalk",
+        "canonical": "#f4f4f2",
+        "purpose": "Night headings, navigation, body copy, and solid action fill.",
+        "tonalRamp": ["#1d1d1b", "#393936", "#585753", "#7a7974", "#9e9d97", "#c4c3be", "#dfdfdb", "#f4f4f2"]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#5d626b",
+        "purpose": "Daylight supporting copy and secondary footer language.",
+        "tonalRamp": ["#17191d", "#292d33", "#41464e", "#5d626b", "#7d828a", "#a4a8ad", "#ced0d3", "#f3f3f4"]
+      },
+      "muted-chalk": {
+        "role": "neutral",
+        "displayName": "Muted Chalk",
+        "canonical": "#bec1c5",
+        "purpose": "Night supporting copy and secondary footer language.",
+        "tonalRamp": ["#1b1d20", "#32363a", "#50555a", "#70767c", "#92979d", "#bec1c5", "#d9dbdd", "#f3f4f4"]
+      },
+      "soft-ink": {
+        "role": "neutral",
+        "displayName": "Soft Ink",
+        "canonical": "#a0a3aa",
+        "purpose": "Daylight hero second line, kickers, and least-prominent labels.",
+        "tonalRamp": ["#191a1d", "#303237", "#4b4e54", "#696c73", "#85888f", "#a0a3aa", "#cbccd0", "#f2f2f3"]
+      },
+      "soft-chalk": {
+        "role": "neutral",
+        "displayName": "Soft Chalk",
+        "canonical": "#898d93",
+        "purpose": "Night hero second line, kickers, and least-prominent labels.",
+        "tonalRamp": ["#17191c", "#2e3135", "#484c51", "#656a70", "#898d93", "#aaadb2", "#d0d2d4", "#f2f3f3"]
+      },
+      "action-light": {
+        "role": "primary",
+        "displayName": "Daylight Action",
+        "canonical": "#171a20",
+        "purpose": "Solid pill action in the light theme.",
+        "tonalRamp": ["#171a20", "#282e37", "#404955", "#5f6a76", "#838d97", "#adb4bb", "#d4d8db", "#f5f6f6"]
+      },
+      "action-dark": {
+        "role": "primary",
+        "displayName": "Night Action",
+        "canonical": "#f4f4f2",
+        "purpose": "Solid pill action in the dark theme.",
+        "tonalRamp": ["#1d1d1b", "#393936", "#585753", "#7a7974", "#9e9d97", "#c4c3be", "#dfdfdb", "#f4f4f2"]
+      },
+      "icon-well": {
+        "role": "neutral",
+        "displayName": "Daylight Icon Well",
+        "canonical": "#ebeae6",
+        "purpose": "Daylight 50px tool-logo tile.",
+        "tonalRamp": ["#23221f", "#44423d", "#67635d", "#8c8780", "#b1ada6", "#d0cdc7", "#e1dfda", "#ebeae6"]
+      },
+      "icon-well-dark": {
+        "role": "neutral",
+        "displayName": "Night Icon Well",
+        "canonical": "#1d2125",
+        "purpose": "Night 50px tool-logo tile.",
+        "tonalRamp": ["#101214", "#1d2125", "#32383e", "#50575e", "#767d84", "#a2a7ac", "#cfd2d5", "#f3f4f4"]
+      },
+      "focus-light": {
+        "role": "tertiary",
+        "displayName": "Daylight Focus",
+        "canonical": "#5f5b55",
+        "purpose": "Two-pixel keyboard focus outline in daylight.",
+        "tonalRamp": ["#1a1816", "#302d29", "#48443f", "#5f5b55", "#817b73", "#aaa49c", "#d1cdc8", "#f4f2ef"]
+      },
+      "focus-dark": {
+        "role": "tertiary",
+        "displayName": "Night Focus",
+        "canonical": "#d5b38a",
+        "purpose": "Warm two-pixel keyboard focus outline at night.",
+        "tonalRamp": ["#281b10", "#48321f", "#684a2f", "#8b6746", "#ad8762", "#d5b38a", "#ead3b8", "#f8eee2"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Editorial Display", "purpose": "The oversized homepage h1, including its muted second line." },
+      "headline": { "displayName": "Section Headline", "purpose": "Workspace, about, and contact headings." },
+      "title": { "displayName": "Card Title", "purpose": "Names inside photographic workspace cards." },
+      "body": { "displayName": "Body", "purpose": "Homepage narrative and supporting copy." },
+      "label": { "displayName": "Environmental Label", "purpose": "Rare uppercase kickers and the scroll cue." },
+      "quote": { "displayName": "Coast Quote", "purpose": "The single self-hosted Cormorant Garamond quote moment." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "theme-crossfade", "value": "opacity 320ms ease", "purpose": "Cross-fades paired daylight and night photography." },
+      { "name": "state-standard", "value": "160ms ease", "purpose": "Button, navigation, and control state changes." },
+      { "name": "arrow-response", "value": "transform 180ms ease", "purpose": "Moves action arrows 2px right and up on hover." },
+      { "name": "photo-drift", "value": "transform 700ms cubic-bezier(.2,.75,.2,1)", "purpose": "Slowly scales a workspace-card photograph from 1.01 to 1.055." },
+      { "name": "scroll-cue", "value": "1.8s ease-in-out infinite", "purpose": "Moves the hero scroll arrow 7px vertically." },
+      { "name": "reduced-motion", "value": "0.01ms", "purpose": "Compresses homepage transitions and animations when reduced motion is preferred." }
+    ],
+    "breakpoints": [
+      { "name": "compact-desktop", "value": "1100px" },
+      { "name": "mobile", "value": "767px" },
+      { "name": "narrow-mobile", "value": "430px" }
+    ],
+    "imagery": {
+      "directory": "public/Images/portfolio/",
+      "rule": "Every meaningful photograph uses a dark canonical source and a daylight lighting-only edit with matching subject, pose, crop, geometry, and focal point. The light image carries the useful alt text; the dark duplicate uses empty alt text.",
+      "pairs": ["hero", "mountain", "headphones", "about", "coast"]
+    }
+  },
+  "components": [
+    {
+      "name": "Solid Pill Action",
+      "kind": "button",
+      "refersTo": "button-solid",
+      "description": "Primary homepage action with reversed monochrome contrast and a responsive arrow.",
+      "html": "<a class=\"ds-btn-solid\" href=\"#workspace\">Explore workspace <svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a>",
+      "css": ".ds-btn-solid { display:inline-flex; min-height:46px; align-items:center; justify-content:center; gap:12px; padding:0 24px; border:1px solid transparent; border-radius:9999px; background:#171a20; color:#fff; font:700 .875rem/1 Plus Jakarta Sans,ui-sans-serif,system-ui,sans-serif; text-decoration:none; transition:background-color 160ms ease; } .ds-btn-solid svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; transition:transform 180ms ease; } .ds-btn-solid:hover { background:#3a3c40; } .ds-btn-solid:hover svg { transform:translate(2px,-2px); } .ds-btn-solid:focus-visible { outline:2px solid #5f5b55; outline-offset:4px; }"
+    },
+    {
+      "name": "Outline Pill Action",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action with a strong hairline and monochrome reversal on hover.",
+      "html": "<a class=\"ds-btn-outline\" href=\"#about\">About me</a>",
+      "css": ".ds-btn-outline { display:inline-flex; min-height:46px; align-items:center; justify-content:center; padding:0 24px; border:1px solid rgba(17,21,27,.56); border-radius:9999px; background:rgba(246,245,242,.18); color:#11151b; font:700 .875rem/1 Plus Jakarta Sans,ui-sans-serif,system-ui,sans-serif; text-decoration:none; backdrop-filter:blur(8px); transition:background-color 160ms ease,color 160ms ease; } .ds-btn-outline:hover { background:#11151b; color:#f6f5f2; } .ds-btn-outline:focus-visible { outline:2px solid #5f5b55; outline-offset:4px; }"
+    },
+    {
+      "name": "Theme Toggle",
+      "kind": "button",
+      "refersTo": "theme-toggle",
+      "description": "Circular theme control that rotates gently and uses the shared pre-paint preference.",
+      "html": "<button class=\"ds-theme-toggle\" aria-label=\"Switch to dark mode\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z\"/></svg></button>",
+      "css": ".ds-theme-toggle { display:grid; width:44px; height:44px; place-items:center; border:1px solid rgba(17,21,27,.56); border-radius:9999px; background:rgba(246,245,242,.72); color:#11151b; backdrop-filter:blur(12px); transition:background-color 160ms ease,transform 160ms ease; } .ds-theme-toggle svg { width:17px; height:17px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; } .ds-theme-toggle:hover { background:#eceae5; transform:rotate(8deg); } .ds-theme-toggle:focus-visible { outline:2px solid #5f5b55; outline-offset:4px; }"
+    },
+    {
+      "name": "Compact Navigation",
+      "kind": "nav",
+      "description": "Centred desktop navigation with a one-pixel underline drawn from the left.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Primary navigation\"><a class=\"is-active\" href=\"#home\">Home</a><a href=\"#about\">About</a><a href=\"#workspace\">Workspace</a></nav>",
+      "css": ".ds-nav { display:flex; align-items:center; gap:46px; font-family:Plus Jakarta Sans,ui-sans-serif,system-ui,sans-serif; } .ds-nav a { position:relative; padding:12px 0; color:#11151b; font-size:.875rem; font-weight:500; text-decoration:none; } .ds-nav a::after { position:absolute; right:0; bottom:5px; left:0; height:1px; content:''; background:currentColor; transform:scaleX(0); transform-origin:left; transition:transform 180ms ease; } .ds-nav a:hover::after,.ds-nav a.is-active::after { transform:scaleX(1); } .ds-nav a:focus-visible { outline:2px solid #5f5b55; outline-offset:4px; border-radius:4px; }"
+    },
+    {
+      "name": "Photographic Workspace Card",
+      "kind": "card",
+      "refersTo": "project-card",
+      "description": "Tall, clipped image card whose depth comes from crop, overlay, and slow photographic scale.",
+      "html": "<a class=\"ds-project-card\" href=\"#workspace\"><span class=\"ds-project-scene\" aria-hidden=\"true\"></span><span class=\"ds-project-shade\" aria-hidden=\"true\"></span><span class=\"ds-project-copy\"><strong>Work Logs</strong><span>Capture each day while the context is fresh.</span><small>Daily record ↗</small></span></a>",
+      "css": ".ds-project-card { position:relative; display:block; min-width:280px; min-height:420px; overflow:hidden; border:1px solid rgba(17,21,27,.14); border-radius:8px; background:#121418; color:#f8f8f6; text-decoration:none; isolation:isolate; } .ds-project-scene { position:absolute; inset:0; z-index:-2; background:linear-gradient(135deg,#c6b8a4,#6f7a73 55%,#20252b); transform:scale(1.01); transition:transform 700ms cubic-bezier(.2,.75,.2,1); } .ds-project-shade { position:absolute; inset:0; z-index:-1; background:linear-gradient(to top,rgba(6,7,9,.96),rgba(6,7,9,.46) 43%,rgba(6,7,9,.03) 75%); } .ds-project-copy { position:absolute; right:24px; bottom:22px; left:24px; display:grid; gap:7px; font-family:Plus Jakarta Sans,ui-sans-serif,system-ui,sans-serif; } .ds-project-copy strong { font-size:1.55rem; letter-spacing:-.03em; } .ds-project-copy span { max-width:34ch; color:rgba(255,255,255,.76); font-size:.96rem; line-height:1.48; } .ds-project-copy small { margin-top:16px; font-size:.82rem; } .ds-project-card:hover .ds-project-scene { transform:scale(1.055); } .ds-project-card:focus-visible { outline:2px solid #5f5b55; outline-offset:4px; }"
+    },
+    {
+      "name": "Tool Icon Well",
+      "kind": "custom",
+      "refersTo": "tool-icon-well",
+      "description": "Compact tool identity tile; authentic logo colour is allowed inside the otherwise monochrome world.",
+      "html": "<div class=\"ds-tool\"><span><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v16H4zM8 8l4 4-4 4m5 0h3\"/></svg></span><strong>VS Code</strong></div>",
+      "css": ".ds-tool { display:grid; justify-items:center; gap:8px; color:#11151b; font:500 .78rem/1.2 Plus Jakarta Sans,ui-sans-serif,system-ui,sans-serif; } .ds-tool>span { display:grid; width:50px; height:50px; place-items:center; border:1px solid rgba(17,21,27,.14); border-radius:12px; background:#ebeae6; } .ds-tool svg { width:25px; height:25px; fill:none; stroke:#2489ca; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }"
+    },
+    {
+      "name": "Coast Quote",
+      "kind": "custom",
+      "description": "The single serif moment, set in white over a darkened full-width photographic band.",
+      "html": "<section class=\"ds-quote\"><blockquote>“A calmer mind<br>builds a brighter you.”</blockquote><p><span></span>Small steps<br>Big changes</p></section>",
+      "css": ".ds-quote { display:flex; min-height:270px; align-items:center; justify-content:space-between; gap:56px; padding:32px 48px; background:linear-gradient(90deg,rgba(7,9,12,.7),rgba(7,9,12,.28)),linear-gradient(135deg,#6e756d,#bf8c66 58%,#25333d); color:#fff; } .ds-quote blockquote { margin:0; font:500 clamp(2.4rem,4.3vw,4.35rem)/.98 Cormorant Garamond,Georgia,serif; letter-spacing:-.025em; } .ds-quote p { display:flex; align-items:center; gap:24px; margin:0; font:700 .68rem/1.65 Plus Jakarta Sans,ui-sans-serif,system-ui,sans-serif; letter-spacing:.28em; text-transform:uppercase; } .ds-quote p span { width:82px; height:1px; background:rgba(255,255,255,.7); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Quiet Studio",
+    "overview": "The public homepage is a cinematic editorial portrait of a personal working life. It pairs generous, asymmetrical type with real photographic atmosphere: a focused desk anchors the opening viewport, three tall image-led cards turn the live workspace areas into places rather than software tiles, a split about section shifts the rhythm, and a coast image gives the serif quote a quiet closing breath. Content, controls, and icons remain semantic DOM layered over separate image assets; the page is never a flattened screenshot.\n\nDay and night are parallel art directions, not a filter applied after the fact. Every meaningful photograph has an authored light and dark counterpart, cross-faded by the existing theme state. The palette follows that imagery with warm paper and near-black in daylight, then graphite and chalk after dark. The design is expressive but restrained: compact navigation, heavy sans display type, a muted second headline line, one italic studio note, pill actions, fine rules, and very little decoration beyond photography.",
+    "keyCharacteristics": [
+      "Asymmetric, photo-led hero with editorial type placed in the quiet side of the image.",
+      "Paired daylight and night photography for every major image-bearing region.",
+      "Warm-neutral monochrome palettes with no homepage brand accent competing with the photographs.",
+      "Heavy Plus Jakarta Sans display type with a muted second line; Cormorant Garamond is reserved for the coast quote.",
+      "Full-pill actions and theme control; cards remain gently squared.",
+      "Three photographic workspace cards, a split about image, a compact tools strip, a quote band, and a quiet contact/footer close.",
+      "Semantic HTML and separate images at every layer; never a screenshot of composed text or controls."
+    ],
+    "rules": [
+      { "name": "The Photograph Carries Colour Rule", "body": "Homepage UI remains warm-neutral. Do not introduce a general-purpose accent; colour comes from the paired photography and the small, truthful brand colours inside tool logos.", "section": "colors" },
+      { "name": "The Paired Scene Rule", "body": "A meaningful homepage photograph ships as a light/dark pair with matched subject, crop, and narrative purpose. Theme changes must feel like time passing in the same world, not navigation to a different page.", "section": "colors" },
+      { "name": "The Scoped World Rule", "body": "`--pf-*` belongs under `.portfolio-page`. The authenticated app's semantic tokens remain authoritative everywhere else.", "section": "colors" },
+      { "name": "The Muted Second Line Rule", "body": "The second line of the hero headline is the same type, weight, size, and rhythm as the first; only its soft neutral colour changes.", "section": "typography" },
+      { "name": "The One Serif Moment Rule", "body": "Cormorant Garamond belongs to the coast quote and nowhere else. Repeating it in cards or section headings would turn a singular pause into a theme.", "section": "typography" },
+      { "name": "The Quiet-Side Rule", "body": "Place hero copy in the image's low-detail zone and tune the theme-specific gradient to preserve both typography and the photographic subject.", "section": "layout" },
+      { "name": "The Editorial Sequence Rule", "body": "Keep the page rhythm: hero → three workspace photographs → split about → compressed tools strip → full-width quote image → contact/footer. New content must justify breaking that sequence instead of inserting a generic band.", "section": "layout" },
+      { "name": "The No Floating Card Rule", "body": "Cards stay on the page plane with one hairline and clipped photography. Do not add box shadows, glow, or hover lift.", "section": "elevation" },
+      { "name": "The Image-First Depth Rule", "body": "Use crop, overlay, light, and restrained image scale to create depth. UI chrome must remain quiet enough that the photograph leads.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep this system inside `.portfolio-page` and preserve the authenticated app's existing visual language.",
+      "Do ship every major photograph as coordinated light and dark files under `public/Images/portfolio/`.",
+      "Do keep text, links, icons, and controls as semantic DOM layered over separate image assets.",
+      "Do preserve the heavy first-line / muted second-line hero hierarchy.",
+      "Do use Cormorant Garamond only for the coast quote.",
+      "Do use hairlines, tonal changes, overlays, and image crop for hierarchy before adding decoration.",
+      "Do preserve real focus states, useful alt text on the light image, empty alt text on its dark duplicate, and the reduced-motion fallback."
+    ],
+    "donts": [
+      "Don't flatten the composition into a screenshot or bake text and controls into an image.",
+      "Don't apply homepage `--pf-*` values to authenticated screens or redesign product primitives to match this page.",
+      "Don't introduce a general brand accent; photography carries the colour.",
+      "Don't add shadows, hover lift, or large rounded marketing panels.",
+      "Don't use Cormorant for headings, navigation, cards, or body copy.",
+      "Don't substitute one photograph plus CSS filters for the authored day/night pairs.",
+      "Don't promise collaboration, integrations, social proof, or deferred product features in homepage copy."
+    ]
+  }
+}

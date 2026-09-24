@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="thTitle thDesc" fill="none">
+  <title id="thTitle">Ticket history timeline</title>
+  <desc id="thDesc">A vertical timeline of four dated ticket updates, each a card with a coloured status pill, showing that past entries are kept rather than overwritten.</desc>
+  <!-- spine -->
+  <path d="M38 40 V282" stroke="#E2E8F0" stroke-width="4" stroke-linecap="round"/>
+  <!-- oldest -->
+  <circle cx="38" cy="258" r="9" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="4"/>
+  <rect x="66" y="234" width="216" height="48" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="80" y="248" width="36" height="10" rx="5" fill="#E7E7EA"/>
+  <rect x="80" y="264" width="120" height="7" rx="3.5" fill="#EDF0F4"/>
+  <rect x="236" y="247" width="32" height="13" rx="6.5" fill="#F1F5F9"/>
+  <!-- blocked -->
+  <circle cx="38" cy="186" r="9" fill="#FFFFFF" stroke="#FCA5A5" stroke-width="4"/>
+  <rect x="66" y="162" width="216" height="48" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="80" y="176" width="36" height="10" rx="5" fill="#E7E7EA"/>
+  <rect x="80" y="192" width="142" height="7" rx="3.5" fill="#EDF0F4"/>
+  <rect x="230" y="175" width="38" height="13" rx="6.5" fill="#FDE9E9"/>
+  <!-- waiting -->
+  <circle cx="38" cy="114" r="9" fill="#FFFFFF" stroke="#FBBF24" stroke-width="4"/>
+  <rect x="66" y="90" width="216" height="48" rx="10" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="80" y="104" width="36" height="10" rx="5" fill="#E7E7EA"/>
+  <rect x="80" y="120" width="108" height="7" rx="3.5" fill="#EDF0F4"/>
+  <rect x="222" y="103" width="46" height="13" rx="6.5" fill="#FDF0D8"/>
+  <!-- today, brand -->
+  <circle cx="38" cy="42" r="11" fill="#0D9488"/>
+  <circle cx="38" cy="42" r="19" fill="#0D9488" opacity=".14"/>
+  <rect x="66" y="16" width="216" height="52" rx="11" fill="#FFFFFF" stroke="#0D9488" stroke-width="2.5"/>
+  <rect x="80" y="31" width="44" height="10" rx="5" fill="#0F172A" opacity=".82"/>
+  <rect x="80" y="48" width="132" height="7" rx="3.5" fill="#0D9488" opacity=".26"/>
+  <rect x="228" y="30" width="40" height="13" rx="6.5" fill="#0D9488" opacity=".16"/>
+</svg>

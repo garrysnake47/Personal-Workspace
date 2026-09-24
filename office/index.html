@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent Office</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* light ramp from memory/design.md */
+  :root{
+    --bg:#F8FAFC; --surface:#FFFFFF; --surface-2:#F1F5F9; --surface-3:#E8EDF4;
+    --text:#0F172A; --text-muted:#475569; --text-subtle:#5B6B80;
+    --border:#E2E8F0; --border-strong:#78899F;
+    --primary:#4F46E5; --primary-subtle:#EEF2FF;
+    --success:#15803D; --info:#2563EB; --warning:#B45309;
+    /* office set dressing */
+    --floor:#EDF1F7; --floor-line:#E1E7F0; --wall:#FFFFFF; --wall-trim:#DCE3ED;
+    --desk:#E6D2B5; --desk-edge:#CBB294; --chair:#C3CCDA;
+    --plant:#3F8F69; --pot:#C2714F;
+    --r-sm:6px; --r-md:10px; --r-lg:14px;
+    --mono:"JetBrains Mono",ui-monospace,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font:14px/1.5 Inter,system-ui,-apple-system,sans-serif;font-feature-settings:"tnum"}
+
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+         padding:12px 20px;border-bottom:1px solid var(--border);background:var(--surface)}
+  header h1{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}
+  .sub{color:var(--text-subtle);font-size:11px;font-family:var(--mono)}
+  .spacer{flex:1}
+  .pill{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--surface-2);
+        border:1px solid var(--border);color:var(--text-muted)}
+  .pill b{color:var(--text);font-weight:600}
+
+  main{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:16px;
+       padding:16px 20px;max-width:1500px;margin:0 auto}
+  @media (max-width:1024px){main{grid-template-columns:minmax(0,1fr)}}
+
+  .room{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:8px}
+  svg.office{display:block;width:100%;height:auto}
+
+  /* ---- animation ---- */
+  .arm{transform-box:fill-box;transform-origin:top center}
+  .working .arm-l{animation:type .45s ease-in-out infinite alternate}
+  .working .arm-r{animation:type .45s ease-in-out infinite alternate-reverse}
+  @keyframes type{from{transform:rotate(-6deg)}to{transform:rotate(7deg)}}
+  .avatar{transform-box:fill-box;transform-origin:bottom center}
+  .working .avatar{animation:bob 2.6s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  .caret{animation:blink 1s steps(1,end) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .led-on{animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .station{cursor:pointer}
+  .station .hit{fill:transparent}
+  .station:hover .plate{fill:var(--surface-2)}
+  .station.selected .plate{fill:var(--primary-subtle);stroke:var(--primary)}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+  /* ---- svg type ---- */
+  .say{font-size:13px;fill:var(--text)}
+  .say-task{font-size:11px;fill:var(--text-subtle)}
+  .name{font-weight:600;font-size:13px;fill:var(--text)}
+  .role{font-size:11px;fill:var(--text-subtle)}
+
+  /* ---- side rail ---- */
+  aside{display:flex;flex-direction:column;gap:14px;min-width:0}
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px}
+  .panel h2{margin:0 0 10px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-subtle)}
+  .feed{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow:auto}
+  .ev{display:flex;gap:8px;font-size:12px;line-height:1.4}
+  .ev time{font-family:var(--mono);font-size:10px;color:var(--text-subtle);flex:none;padding-top:2px}
+  .ev .w{color:var(--primary);font-weight:500}
+  .log{display:flex;flex-direction:column;gap:9px;max-height:220px;overflow:auto}
+  .log .row{border-left:2px solid var(--border);padding-left:9px}
+  .log .meta{font-family:var(--mono);font-size:10px;color:var(--text-subtle)}
+  .log .what{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .empty-note{color:var(--text-subtle);font-size:12px}
+  .kv{display:flex;gap:8px;font-size:11px;color:var(--text-muted);flex-wrap:wrap;font-family:var(--mono)}
+  .chip{font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:var(--r-sm);
+        background:var(--surface-2);border:1px solid var(--border);color:var(--text-muted)}
+  .files{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;max-height:130px;overflow:auto}
+  .more{font-size:11px;color:var(--text-subtle);margin-top:5px}
+  .detail h3{margin:0 0 2px;font-size:14px}
+  .detail .task{color:var(--text-muted);font-size:12px;margin-bottom:9px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Agent Office</h1>
+  <span class="sub" id="watch"></span>
+  <span class="spacer"></span>
+  <span class="pill"><b id="c-working">0</b> at their desk</span>
+  <span class="pill"><b id="c-done">0</b> tasks finished</span>
+  <span class="pill" id="clock">—</span>
+</header>
+
+<main>
+  <section class="room">
+    <svg class="office" id="office" viewBox="0 0 1140 700" role="img" aria-label="Office floor"></svg>
+  </section>
+  <aside>
+    <div class="panel detail" id="detail"></div>
+    <div class="panel"><h2>Live activity</h2><div class="feed" id="feed"></div></div>
+    <div class="panel"><h2>Worklog</h2><div class="log" id="log"></div></div>
+  </aside>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const hhmm = (iso) => iso ? new Date(iso).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "";
+const ago = (iso) => {
+  if (!iso) return "—";
+  const s = Math.max(0, (Date.now() - new Date(iso)) / 1000);
+  if (s < 60) return Math.round(s) + "s ago";
+  if (s < 3600) return Math.round(s/60) + "m ago";
+  if (s < 86400) return Math.round(s/3600) + "h ago";
+  return Math.round(s/86400) + "d ago";
+};
+function wrap(text, w, lines) {
+  const words = String(text || "").split(/\s+/);
+  const out = []; let cur = "";
+  for (const word of words) {
+    if ((cur + " " + word).trim().length > w) { out.push(cur.trim()); cur = word; }
+    else cur += " " + word;
+    if (out.length === lines) break;
+  }
+  if (out.length < lines && cur.trim()) out.push(cur.trim());
+  if (out.length === lines && words.join(" ").length > out.join(" ").length)
+    out[lines-1] = out[lines-1].slice(0, w - 1) + "…";
+  return out.length ? out : ["—"];
+}
+// file paths read better as just the filename in a bubble
+const pretty = (t) => String(t || "").replace(/(\S*\/)(\S+)/g, "$2");
+
+const LOOK = {
+  "lead":           { shirt:"#4F46E5", hair:"#2B2F45", skin:"#E8C39E" },
+  "ui-designer":    { shirt:"#DB2777", hair:"#4A2436", skin:"#8D5A3C" },
+  "frontend-dev":   { shirt:"#2563EB", hair:"#1F2937", skin:"#F0D2B0" },
+  "backend-dev":    { shirt:"#15803D", hair:"#3F2A1B", skin:"#A86B45" },
+  "sanity-checker": { shirt:"#B45309", hair:"#111827", skin:"#C98A5E" },
+};
+
+/* one small desk + one small person, 340 x 250 */
+function station(d, sel) {
+  const w = d.current, look = LOOK[d.id];
+  const on = d.status === "working", done = d.status === "done", here = !!w;
+  const led = on ? "var(--success)" : done ? "var(--info)" : "var(--border-strong)";
+
+  const say = here ? wrap(pretty(w.action), 34, 2) : ["Desk is free."];
+  const bubbleLines = say.map((t, n) => `<tspan x="72" dy="${n ? 16 : 0}">${esc(t)}</tspan>`).join("");
+
+  // cute face: eyes open while working, happy arcs when the task is done
+  const face = on
+    ? `<circle cx="141" cy="112" r="2.6" fill="#1F2937"/><circle cx="159" cy="112" r="2.6" fill="#1F2937"/>
+       <path d="M144 122 q6 5 12 0" stroke="#1F2937" stroke-width="1.8" fill="none" stroke-linecap="round"/>`
+    : `<path d="M137 112 q4 -5 8 0 M155 112 q4 -5 8 0" stroke="#1F2937" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+       <path d="M144 121 q6 6 12 0" stroke="#1F2937" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+
+  return `
+  <g class="station ${on ? "working" : ""} ${sel ? "selected" : ""}" data-id="${d.id}"
+     transform="translate(${d.x},${d.y})">
+
+    <!-- what they're doing, said out loud -->
+    <g opacity="${here ? 1 : .55}">
+      <rect x="60" y="0" width="268" height="${say.length > 1 ? 62 : 46}" rx="12"
+            fill="${on ? "var(--primary-subtle)" : "var(--surface-2)"}"
+            stroke="${on ? "var(--primary)" : "var(--border)"}"/>
+      <path d="M150 ${say.length > 1 ? 62 : 46} l-10 16 l30 -16 z"
+            fill="${on ? "var(--primary-subtle)" : "var(--surface-2)"}"/>
+      <text class="say-task" x="72" y="17">${esc(here ? wrap(w.task, 40, 1)[0] : "no task assigned")}</text>
+      <text class="say" x="72" y="36" fill="${on ? "var(--primary)" : "var(--text-muted)"}">${bubbleLines}</text>
+    </g>
+
+    <!-- chair -->
+    <rect x="118" y="150" width="64" height="52" rx="16" fill="var(--chair)"/>
+    ${here ? `
+    <g class="avatar">
+      <g class="arm arm-l"><rect x="112" y="146" width="13" height="36" rx="6" fill="${look.shirt}"/>
+        <circle cx="118" cy="182" r="7" fill="${look.skin}"/></g>
+      <g class="arm arm-r"><rect x="175" y="146" width="13" height="36" rx="6" fill="${look.shirt}"/>
+        <circle cx="181" cy="182" r="7" fill="${look.skin}"/></g>
+      <rect x="124" y="134" width="52" height="52" rx="20" fill="${look.shirt}"/>
+      <circle cx="150" cy="112" r="27" fill="${look.skin}"/>
+      <path d="M123 110 a27 27 0 0 1 54 0 q-27 -15 -54 0 z" fill="${look.hair}"/>
+      ${face}
+      ${done ? `<g transform="translate(180,96)"><circle r="11" fill="var(--info)"/>
+        <path d="M-4.5 0 l3 4 l6.5 -7.5" stroke="#fff" stroke-width="2.2" fill="none" stroke-linecap="round"/></g>` : ""}
+    </g>` : ""}
+
+    <!-- desk, drawn over the body -->
+    <rect x="52" y="178" width="196" height="36" rx="9" fill="var(--desk)" stroke="var(--desk-edge)"/>
+    <rect x="112" y="188" width="76" height="17" rx="3" fill="var(--surface)" stroke="var(--desk-edge)"/>
+    <g fill="var(--border-strong)" opacity=".5">
+      ${[0,1,2,3,4,5].map(c => `<rect x="${117 + c*12}" y="192" width="8" height="3" rx="1"/>`).join("")}
+      ${[0,1,2,3,4,5].map(c => `<rect x="${117 + c*12}" y="198" width="8" height="3" rx="1"/>`).join("")}
+    </g>
+    <!-- little monitor beside the keyboard -->
+    <rect x="196" y="160" width="46" height="34" rx="4" fill="var(--surface-3)" stroke="var(--desk-edge)"/>
+    <rect x="200" y="164" width="38" height="26" rx="2"
+          fill="${on ? "var(--primary)" : "var(--surface-2)"}" opacity="${on ? .9 : 1}"/>
+    ${on ? `<rect class="caret" x="204" y="168" width="4" height="8" fill="#fff"/>` : ""}
+    <circle cx="66" cy="196" r="6" fill="${led}" class="${on ? "led-on" : ""}"/>
+    <rect x="76" y="186" width="12" height="16" rx="3" fill="var(--surface)" stroke="var(--desk-edge)"/>
+
+    <!-- nameplate -->
+    <rect class="plate" x="80" y="222" width="140" height="42" rx="8"
+          fill="var(--surface)" stroke="var(--border)"/>
+    <text class="name" x="150" y="240" text-anchor="middle">${esc(d.name)}</text>
+    <text class="role" x="150" y="255" text-anchor="middle">${esc(d.seat)}</text>
+    <rect class="hit" x="30" y="0" width="300" height="264"/>
+  </g>`;
+}
+
+function room() {
+  const win = (x) => `
+    <rect x="${x}" y="20" width="128" height="56" rx="5" fill="#DCEBFA" stroke="var(--wall-trim)" stroke-width="2"/>
+    <line x1="${x+64}" y1="20" x2="${x+64}" y2="76" stroke="var(--wall-trim)" stroke-width="2"/>`;
+  const plant = (x,y,s) => `<g transform="translate(${x},${y}) scale(${s})">
+      <path d="M0 0 q-22 -26 -5 -48 q14 18 5 48z" fill="var(--plant)"/>
+      <path d="M0 0 q22 -30 3 -54 q-12 22 -3 54z" fill="var(--plant)" opacity=".75"/>
+      <path d="M-18 0 h36 l-6 26 h-24 z" fill="var(--pot)"/></g>`;
+  return `
+    <rect width="1140" height="700" fill="var(--floor)"/>
+    ${Array.from({length:13},(_,i)=>`<line x1="${i*90}" y1="88" x2="${i*90}" y2="700" stroke="var(--floor-line)"/>`).join("")}
+    ${Array.from({length:7},(_,i)=>`<line x1="0" y1="${88+i*90}" x2="1140" y2="${88+i*90}" stroke="var(--floor-line)"/>`).join("")}
+    <rect width="1140" height="88" fill="var(--wall)"/>
+    <rect y="82" width="1140" height="6" fill="var(--wall-trim)"/>
+    ${win(70)} ${win(240)}
+    <rect x="450" y="16" width="180" height="64" rx="5" fill="var(--surface)" stroke="var(--border-strong)" stroke-width="2"/>
+    <path d="M466 36 h52 M466 50 h104 M466 64 h72" stroke="var(--text-subtle)" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+    ${win(700)} ${win(870)}
+    <g transform="translate(58,660)">${plant(0,0,1)}</g>
+    <g transform="translate(1082,660)">${plant(0,0,1.1)}</g>
+    <g transform="translate(570,668)">
+      <rect x="-54" y="-20" width="108" height="20" rx="6" fill="var(--desk)" stroke="var(--desk-edge)"/>
+      <rect x="-40" y="-36" width="20" height="17" rx="3" fill="var(--surface-3)"/>
+      <circle cx="8" cy="-28" r="9" fill="var(--surface-3)"/>
+      <path d="M8 -37 v-6 M-2 -37 v-5 M18 -37 v-5" stroke="var(--text-subtle)" stroke-width="2" stroke-linecap="round"/>
+    </g>`;
+}
+
+let selected = null, latest = null;
+const layout = (desks) => desks.map((d, i) => i < 3
+  ? { ...d, x: [30, 400, 770][i], y: 110 }
+  : { ...d, x: [215, 585][i - 3], y: 400 });
+
+function detail(d) {
+  if (!d) return `<h2>Desk</h2><div class="empty-note">Click anyone on the floor to see what they're doing.</div>`;
+  const w = d.current;
+  if (!w) return `<h3>${esc(d.name)}</h3><div class="task">${esc(d.seat)}</div>
+                  <div class="empty-note">No task assigned — this desk is empty.</div>`;
+  return `<h3>${esc(d.name)}</h3><div class="task">${esc(w.task)}</div>
+    <div class="kv"><span>${w.turns} turns</span>
+      <span>${d.status === "working" ? "working now" : "finished " + ago(w.lastAt)}</span>
+      <span>${esc(w.agentType)}</span></div>
+    ${w.files.length ? `<div class="files">${w.files.slice(0,24).map(f=>`<span class="chip">${esc(f)}</span>`).join("")}</div>
+      ${w.files.length > 24 ? `<div class="more">+${w.files.length-24} more files touched</div>` : ""}` : ""}`;
+}
+
+function render(s) {
+  latest = s;
+  const desks = layout(s.desks);
+  $("watch").textContent = s.project;
+  $("c-working").textContent = s.counts.working;
+  $("c-done").textContent = s.counts.done;
+  $("clock").textContent = "updated " + hhmm(s.now);
+  $("office").innerHTML = room() + desks.map(d => station(d, d.id === selected)).join("");
+  $("office").querySelectorAll(".station").forEach(g =>
+    g.addEventListener("click", () => { selected = g.dataset.id; render(latest); }));
+  $("detail").innerHTML = detail(desks.find(d => d.id === selected));
+
+  const events = s.desks.flatMap(d => (d.current?.trail || []).map(t => ({...t, who: d.name})))
+    .sort((a,b) => new Date(b.at) - new Date(a.at)).slice(0, 30);
+  $("feed").innerHTML = events.length
+    ? events.map(e => `<div class="ev"><time>${hhmm(e.at)}</time>
+        <div><span class="w">${esc(e.who)}</span> ${esc(e.text)}</div></div>`).join("")
+    : `<div class="empty-note">Nothing yet. Launch an agent and it shows up here.</div>`;
+  $("log").innerHTML = s.worklog.length
+    ? s.worklog.map(r => `<div class="row"><div class="meta">${esc(r.date)} · ${esc(r.agent)}</div>
+        <div class="what">${esc(r.what)}</div></div>`).join("")
+    : `<div class="empty-note">memory/worklog.md is empty.</div>`;
+}
+
+async function tick() {
+  try { render(await (await fetch("/api/state")).json()); }
+  catch { $("clock").textContent = "disconnected"; }
+}
+tick();
+setInterval(tick, 2000);
+</script>
+</body>
+</html>

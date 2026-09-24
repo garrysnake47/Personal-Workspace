@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" role="img" aria-labelledby="ckTitle ckDesc" fill="none">
+  <title id="ckTitle">Completed checklist cards</title>
+  <desc id="ckDesc">A stack of cards, the front one listing three completed items with brand-teal check marks, representing a day's work recorded and closed out.</desc>
+  <g transform="rotate(-4 160 152)">
+    <!-- offset cards behind, showing the stack -->
+    <rect x="70" y="74" width="216" height="180" rx="14" fill="#CCFBF1"/>
+    <rect x="58" y="66" width="224" height="184" rx="14" fill="#F4FCFA" stroke="#E2E8F0" stroke-width="2"/>
+    <!-- front card -->
+    <rect x="44" y="58" width="232" height="188" rx="14" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+
+    <!-- item 1 -->
+    <rect x="68" y="82" width="34" height="34" rx="9" fill="#0D9488"/>
+    <path d="M77 99.5 L83.5 106 L94 90.5" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="118" y="94" width="130" height="8" rx="4" fill="#E2E8F0"/>
+
+    <!-- item 2 -->
+    <rect x="68" y="134" width="34" height="34" rx="9" fill="#0D9488"/>
+    <path d="M77 151.5 L83.5 158 L94 142.5" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="118" y="146" width="106" height="8" rx="4" fill="#E2E8F0"/>
+
+    <!-- item 3 -->
+    <rect x="68" y="186" width="34" height="34" rx="9" fill="#0D9488"/>
+    <path d="M77 203.5 L83.5 210 L94 194.5" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="118" y="198" width="122" height="8" rx="4" fill="#E2E8F0"/>
+  </g>
+</svg>
