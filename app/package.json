@@ -14,7 +14,8 @@
     "db:reset": "prisma migrate reset",
     "db:seed:bulk": "tsx prisma/seed-bulk.ts",
     "db:seed:notes": "tsx prisma/seed-notes.ts",
-    "db:seed:fill": "tsx prisma/seed-fill.ts"
+    "db:seed:fill": "tsx prisma/seed-fill.ts",
+    "db:hosted": "node scripts/hosted-db.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.3",
