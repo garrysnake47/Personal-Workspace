@@ -19,7 +19,9 @@ import {
  * render. Idempotent — safe to re-run.
  */
 
-const DEMO_EMAIL = "tariboi36@gmail.com";
+// Fresh clones get `SEED_EMAIL=demo@worknest.local` from `npm run setup`; the
+// fallback keeps the owner's existing app/.env seeding their own account.
+const DEMO_EMAIL = process.env.SEED_EMAIL?.trim() || "tariboi36@gmail.com";
 // Never commit a real password: read it from the environment (app/.env locally,
 // the host's env vars in a hosted database).
 const DEMO_PASSWORD = process.env.SEED_PASSWORD ?? "";
