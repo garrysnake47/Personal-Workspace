@@ -3,6 +3,7 @@ import { format } from "date-fns";
 import { AppShell } from "@/components/shell/app-shell";
 import { MuiProvider } from "@/components/ui/mui-provider";
 import { requireUser } from "@/lib/session";
+import { getUserSettings } from "@/lib/user-settings";
 
 /**
  * Authenticated layout. `requireUser()` redirects to /login when there is no
@@ -17,11 +18,14 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
+  // Name and feature switches come from the Profile page (the session only
+  // carries what was true at sign-in).
+  const settings = await getUserSettings(user.id);
 
   return (
     <MuiProvider>
     <AppShell
-      user={{ id: user.id, name: user.name, email: user.email }}
+      user={{ id: user.id, name: settings.name ?? user.name, email: user.email, ticketsEnabled: settings.ticketsEnabled }}
       todayLabel={format(new Date(), "EEE, d MMM yyyy")}
     >
       {children}

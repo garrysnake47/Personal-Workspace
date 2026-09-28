@@ -9,7 +9,7 @@ import { cn } from "@/components/cn";
  * wants 44px targets and 15px type. `ui/field.tsx` and `ui/input.tsx` are
  * untouched and still own every in-app form.
  *
- * Rules applied (ui-ux-pro-max):
+ * Rules applied:
  *   ux-guidelines #54  visible label, never placeholder-only
  *   ux-guidelines #55  inline error below the field, wired with aria-describedby
  *   ux-guidelines #37  error is never colour-only — icon + text as well

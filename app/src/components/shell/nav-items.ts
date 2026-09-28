@@ -1,9 +1,9 @@
 import {
   LibraryBig,
   FileText,
-  LayoutDashboard,
   ListChecks,
   NotebookPen,
+  Star,
   Ticket,
   type LucideIcon,
 } from "lucide-react";
@@ -18,13 +18,18 @@ export type NavItem = {
 
 /** The focused build exposes only the active workspace tools. */
 export const PRIMARY_NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/work-logs", label: "Work Logs", icon: NotebookPen },
   { href: "/tickets", label: "Tickets", icon: Ticket },
   { href: "/tracker", label: "Tracker", icon: ListChecks },
   { href: "/notes", label: "Notes", icon: FileText },
   { href: "/resources", label: "Resources", icon: LibraryBig },
+  { href: "/favourites", label: "Favourites", icon: Star },
 ];
+
+/** Sections for this user: Tickets only when tickets are switched on in Profile. */
+export function navFor(ticketsEnabled: boolean): NavItem[] {
+  return ticketsEnabled ? PRIMARY_NAV : PRIMARY_NAV.filter((item) => item.href !== "/tickets");
+}
 
 export const SECONDARY_NAV: NavItem[] = [];
 

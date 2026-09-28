@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { notFound, ok, parseOrFail } from "@/lib/result";
 import type { ResourceType } from "@/generated/prisma/enums";
@@ -13,6 +14,7 @@ import {
   deleteLinkSchema,
   deleteResourceSchema,
   deleteTaskSchema,
+  toggleResourceFavoriteSchema,
   updateLinkSchema,
   updateResourceSchema,
   updateTaskSchema,
@@ -142,6 +144,23 @@ export async function deleteResource(input: unknown) {
 
   revalidatePath("/resources");
   return ok({ deleted: true });
+}
+
+/** Star / unstar a resource — starred ones appear on the Favourites page. */
+export async function toggleResourceFavorite(input: unknown) {
+  const userId = await requireUserId();
+  const parsed = parseOrFail(toggleResourceFavoriteSchema, input);
+  if (!parsed.ok) return parsed;
+
+  const result = await prisma.resource.updateMany({
+    where: { id: parsed.data.resourceId, userId },
+    data: { favorite: parsed.data.favorite },
+  });
+  if (result.count === 0) return notFound("Resource not found");
+
+  revalidatePath("/resources");
+  revalidatePath("/favourites");
+  return ok({ favorite: parsed.data.favorite });
 }
 
 export async function listResources(search?: string, type?: ResourceType) {

@@ -1,5 +1,7 @@
 import "server-only";
 
+import { DEFAULT_TITLE, type DayType } from "@/components/work-log/day-type";
+
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import type { TicketStatus as StoredTicketStatus } from "@/generated/prisma/enums";
@@ -49,6 +51,11 @@ export const workLogInclude = {
     orderBy: { createdAt: "asc" },
     include: { ticket: true },
   },
+  // Never `data` here — file bytes are only read by the download route.
+  attachments: {
+    orderBy: { createdAt: "asc" },
+    select: { id: true, kind: true, name: true, url: true, mimeType: true, size: true, createdAt: true },
+  },
 } satisfies Prisma.WorkLogInclude;
 
 export type WorkLogWithRelations = Awaited<
@@ -66,7 +73,7 @@ export async function getOrCreateWorkLog(
   userId: string,
   date: Date = todayUtc(),
   title?: string,
-  projectName?: string | null,
+  dayType: DayType = "Work",
 ) {
   const day = toDateOnly(date);
 
@@ -81,8 +88,8 @@ export async function getOrCreateWorkLog(
       data: {
         userId,
         date: day,
-        title: title?.trim() || "Daily Work Log",
-        projectName: projectName?.trim() || null,
+        title: title?.trim() || DEFAULT_TITLE[dayType],
+        dayType,
         meetings: {
           create: DEFAULT_MEETINGS.map((name, order) => ({
             name,
@@ -159,7 +166,6 @@ export async function listWorkLogs(
       ? {
           OR: [
             { title: { contains: search, mode: "insensitive" as const } },
-            { projectName: { contains: search, mode: "insensitive" as const } },
             {
               meetings: {
                 some: {
@@ -203,6 +209,12 @@ export async function listWorkLogs(
       skip,
       include: {
         _count: { select: { meetings: true, ticketUpdates: true } },
+        // Ticket keys + titles for the sprint tile's hover list.
+        ticketUpdates: {
+          where: { userId },
+          orderBy: { createdAt: "asc" },
+          select: { id: true, ticket: { select: { ticketId: true, title: true } } },
+        },
       },
     }),
     prisma.workLog.count({ where }),
@@ -211,16 +223,28 @@ export async function listWorkLogs(
   return { items, total };
 }
 
+/** The logs just before and after this one (by date) — the editor's ‹ › buttons. */
+export async function getAdjacentWorkLogs(userId: string, workLogId: string) {
+  const current = await prisma.workLog.findFirst({ where: { id: workLogId, userId }, select: { date: true } });
+  if (!current) return null;
+  const select = { id: true, date: true } as const;
+  const [previous, next] = await Promise.all([
+    prisma.workLog.findFirst({ where: { userId, date: { lt: current.date } }, orderBy: { date: "desc" }, select }),
+    prisma.workLog.findFirst({ where: { userId, date: { gt: current.date } }, orderBy: { date: "asc" }, select }),
+  ]);
+  return { previous, next };
+}
+
 export async function updateWorkLogDetails(
   userId: string,
   workLogId: string,
-  data: { title?: string; projectName?: string | null },
+  data: { title?: string; dayType?: DayType },
 ) {
   const result = await prisma.workLog.updateMany({
     where: { id: workLogId, userId },
     data: {
       ...(data.title !== undefined ? { title: data.title } : {}),
-      ...(data.projectName !== undefined ? { projectName: data.projectName } : {}),
+      ...(data.dayType !== undefined ? { dayType: data.dayType } : {}),
     },
   });
   if (result.count === 0) return null;
@@ -351,4 +375,94 @@ function normalizeWorkLogStatuses<
       };
     }),
   };
+}
+
+
+// ---------------------------------------------------------------------------
+// Learning notes & attachments
+// ---------------------------------------------------------------------------
+
+export const ATTACHMENT_SELECT = {
+  id: true,
+  kind: true,
+  name: true,
+  url: true,
+  mimeType: true,
+  size: true,
+  createdAt: true,
+} as const;
+
+/** Max bytes per uploaded file (stored in Postgres). */
+export const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+
+export async function saveLearningNotesRow(userId: string, workLogId: string, notes: string) {
+  const result = await prisma.workLog.updateMany({
+    where: { id: workLogId, userId },
+    data: { learningNotes: notes },
+  });
+  return result.count > 0;
+}
+
+export async function addLinkAttachment(
+  userId: string,
+  workLogId: string,
+  data: { url: string; label?: string | null },
+) {
+  const owned = await prisma.workLog.findFirst({ where: { id: workLogId, userId }, select: { id: true } });
+  if (!owned) return null;
+  let name = data.label?.trim() || "";
+  if (!name) {
+    try { name = new URL(data.url).hostname.replace(/^www\./, ""); } catch { name = data.url; }
+  }
+  return prisma.workLogAttachment.create({
+    data: { workLogId, userId, kind: "Link", name, url: data.url },
+    select: ATTACHMENT_SELECT,
+  });
+}
+
+export async function addFileAttachments(
+  userId: string,
+  workLogId: string,
+  files: Array<{ name: string; mimeType: string; bytes: Uint8Array<ArrayBuffer> }>,
+) {
+  const owned = await prisma.workLog.findFirst({ where: { id: workLogId, userId }, select: { id: true } });
+  if (!owned) return null;
+  return prisma.$transaction(
+    files.map((file) =>
+      prisma.workLogAttachment.create({
+        data: {
+          workLogId,
+          userId,
+          kind: "File",
+          name: file.name,
+          mimeType: file.mimeType,
+          size: file.bytes.byteLength,
+          data: file.bytes,
+        },
+        select: ATTACHMENT_SELECT,
+      }),
+    ),
+  );
+}
+
+export async function getAttachmentFile(userId: string, attachmentId: string) {
+  return prisma.workLogAttachment.findFirst({
+    where: { id: attachmentId, userId, kind: "File" },
+    select: { name: true, mimeType: true, size: true, data: true },
+  });
+}
+
+export async function deleteAttachmentRow(userId: string, attachmentId: string) {
+  const result = await prisma.workLogAttachment.deleteMany({ where: { id: attachmentId, userId } });
+  return result.count > 0;
+}
+
+
+/** YYYY-MM-DD keys of every day this user marked as Holiday or Leave. */
+export async function listDaysOff(userId: string) {
+  const rows = await prisma.workLog.findMany({
+    where: { userId, dayType: { not: "Work" } },
+    select: { date: true },
+  });
+  return rows.map((row) => formatDateKey(row.date));
 }

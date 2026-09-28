@@ -67,7 +67,7 @@ export function ConfirmationDialog({
         if (event.target === ref.current && !busy) onCancel();
       }}
       className={cn(
-        "m-auto w-[calc(100%-2rem)] max-w-96 rounded-xl border border-border bg-surface p-6 text-text shadow-lg",
+        "t-modal m-auto w-[calc(100%-2rem)] max-w-96 rounded-2xl border border-border bg-surface p-6 text-text shadow-lg",
         "backdrop:bg-overlay",
       )}
     >

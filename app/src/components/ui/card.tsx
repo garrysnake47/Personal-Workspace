@@ -3,7 +3,7 @@ import * as React from "react";
 import { cn } from "@/components/cn";
 
 /**
- * Card — flat. Border, never a shadow (design.md §7). 16px padding (§9);
+ * Card — bordered, with the soft tinted `shadow-card` lift (2026-09-28 refresh). 16px padding (§9);
  * `padding="lg"` (24px) is reserved for the work-log editor and empty states.
  */
 export function Card({
@@ -18,7 +18,7 @@ export function Card({
   return (
     <Tag
       className={cn(
-        "rounded-lg border border-border bg-card",
+        "rounded-2xl border border-border bg-card shadow-card",
         padding === "md" && "p-4",
         padding === "lg" && "p-6",
         className,

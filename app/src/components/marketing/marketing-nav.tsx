@@ -6,7 +6,6 @@ import { Menu, X } from "lucide-react";
 
 import { cn } from "@/components/cn";
 import { Container } from "@/components/marketing/primitives";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 /**
  * Floating pill nav, modelled on the reference site: white fill,
@@ -138,7 +137,6 @@ export function MarketingNav({ signedIn }: { signedIn: boolean }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-2 md:ml-0 md:justify-self-end md:gap-4">
-            <ThemeToggle className="hidden bg-surface md:inline-flex" />
             {signedIn ? (
               <Link
                 href="/work-logs"
@@ -209,10 +207,6 @@ export function MarketingNav({ signedIn }: { signedIn: boolean }) {
                 >
                   {signedIn ? "Open Work Logs" : "Sign in"}
                 </Link>
-              </li>
-              <li className="flex items-center justify-between gap-3 border-t border-border px-3 py-2">
-                <span className="text-sm font-semibold text-text-muted">Theme</span>
-                <ThemeToggle />
               </li>
             </ul>
           </nav>

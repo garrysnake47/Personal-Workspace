@@ -75,9 +75,9 @@ export function TicketHistory({
             <TicketStatusBadge status={entry.status} />
           </div>
 
-          {entry.workLog ? (
-            <p className="mt-1 text-sm font-medium text-text-muted">{entry.workLog.title}</p>
-          ) : null}
+          <p className="mt-1 text-sm font-medium text-text-muted">
+            {entry.workLog ? entry.workLog.title : "Ticket update"}
+          </p>
 
           {entry.description.trim() ? (
             <MarkdownContent value={entry.description} className="mt-2 max-w-[72ch] text-md text-text" />

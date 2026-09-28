@@ -15,6 +15,19 @@ datasource db {
 // Enums
 // ---------------------------------------------------------------------------
 
+/// What kind of day a work log records. Holiday / Leave days carry no meetings
+/// or ticket work in the UI; they just account for the day.
+enum DayType {
+  Work
+  Holiday
+  Leave
+}
+
+enum AttachmentKind {
+  File
+  Link
+}
+
 enum TicketStatus {
   // Legacy values remain in the database for historical rows. The application
   // normalizes them into the five workflow stages below.
@@ -68,6 +81,7 @@ enum EntryKind {
   FollowUp
   Task
   Note
+  Idea
 }
 
 enum ResourceType {
@@ -94,12 +108,19 @@ model User {
   emailVerified DateTime?
   image         String?
   passwordHash  String?
+  /// Profile: the day sprints are counted from (null = app default). Plain calendar day.
+  sprintStartDate  DateTime? @db.Date
+  /// Profile: sprint length in days.
+  sprintLengthDays Int       @default(14)
+  /// Profile: track tickets inside work logs (and show the Tickets page).
+  ticketsEnabled   Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   accounts             Account[]
   sessions             Session[]
   workLogs             WorkLog[]
+  workLogAttachments   WorkLogAttachment[]
   tickets              Ticket[]
   ticketWorkUpdates    TicketWorkUpdate[]
   ticketHistoryEntries TicketHistoryEntry[]
@@ -157,23 +178,50 @@ model VerificationToken {
 // ---------------------------------------------------------------------------
 
 model WorkLog {
-  id          String   @id @default(cuid())
-  userId      String
-  title       String   @default("Daily Work Log")
-  projectName String?
+  id            String   @id @default(cuid())
+  userId        String
+  title         String   @default("Daily Work Log")
+  dayType       DayType  @default(Work)
+  /// Learning / upskilling notes for the day (Markdown). Independent of tickets.
+  learningNotes String   @default("") @db.Text
   /// Stored as a UTC-midnight DateTime. One primary log per user per date.
-  date        DateTime @db.Date
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  date          DateTime @db.Date
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   meetings      Meeting[]
   ticketUpdates TicketWorkUpdate[]
+  attachments   WorkLogAttachment[]
 
   @@unique([userId, date])
   @@index([userId])
   @@index([userId, date])
   @@index([userId, updatedAt])
+}
+
+/// A file uploaded to, or a link added to, a work log. Files are stored in the
+/// database (`data`, ≤10 MB) so they survive serverless hosting; `data` is never
+/// selected in list queries — only the download route reads it.
+model WorkLogAttachment {
+  id        String         @id @default(cuid())
+  workLogId String
+  userId    String
+  kind      AttachmentKind
+  /// File name, or the link's label.
+  name      String
+  /// Links only.
+  url       String?
+  mimeType  String?
+  size      Int?
+  data      Bytes?
+  createdAt DateTime       @default(now())
+
+  workLog WorkLog @relation(fields: [workLogId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([workLogId])
+  @@index([userId])
 }
 
 model Meeting {
@@ -197,14 +245,16 @@ model Meeting {
 // ---------------------------------------------------------------------------
 
 model Ticket {
-  id        String       @id @default(cuid())
-  userId    String
+  id          String       @id @default(cuid())
+  userId      String
   /// Human ticket key, e.g. "ASU-1234". UNIQUE PER USER, not globally.
-  ticketId  String
-  title     String
-  status    TicketStatus @default(InProgress)
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  ticketId    String
+  title       String
+  /// Project / site the ticket belongs to (moved here from WorkLog).
+  projectName String?
+  status      TicketStatus @default(InProgress)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   updates        TicketWorkUpdate[]
@@ -283,6 +333,8 @@ model FollowUp {
   /// concerns a ticket that was never opened in this app.
   ticketKey   String?
   status      FollowUpStatus @default(Open)
+  /// Flagged as important — shown in its own group at the top of the Tracker.
+  pinned      Boolean        @default(false)
   /// When the next nudge is due. Null = logged for the record, no date attached.
   dueDate     DateTime?      @db.Date
   completedAt DateTime?
@@ -438,12 +490,15 @@ model Resource {
   url         String?
   content     String       @default("") @db.Text
   tags        String[]     @default([])
+  /// Starred — shown on the Favourites page.
+  favorite    Boolean      @default(false)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([userId, favorite])
   @@index([userId, type])
   @@index([userId, createdAt])
 }

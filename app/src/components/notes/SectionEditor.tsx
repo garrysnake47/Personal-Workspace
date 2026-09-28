@@ -4,11 +4,10 @@ import { AnimatePresence, motion, Reorder, useDragControls, useReducedMotion } f
 import { ChevronDown, Copy, GripVertical, Plus, Trash2 } from "lucide-react";
 import { useId } from "react";
 
-import { Field } from "@/components/notes/note-field";
-import { Input } from "@/components/ui/input";
 import {
   IconAction,
   PageEditor,
+  ToolbarGroup,
   type PageDraft,
   type SectionOption,
 } from "@/components/notes/PageEditor";
@@ -34,6 +33,8 @@ export function SectionEditor({
   onRemove,
   onAddPage,
   onMovePage,
+  collapsedPages,
+  onTogglePage,
 }: {
   section: SectionDraft;
   index: number;
@@ -50,6 +51,9 @@ export function SectionEditor({
   onRemove: () => void;
   onAddPage: () => void;
   onMovePage: (pageId: string, targetSectionId: string) => void;
+  /** page ids whose editors are folded */
+  collapsedPages: string[];
+  onTogglePage: (pageId: string) => void;
 }) {
   const controls = useDragControls();
   const reduceMotion = useReducedMotion() ?? false;
@@ -69,84 +73,71 @@ export function SectionEditor({
       value={section}
       dragListener={false}
       dragControls={controls}
-      className={cn(
-        "min-w-0 bg-bg",
-        "[&:not(:first-child)]:mt-7 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-border-strong [&:not(:first-child)]:pt-7",
-        "sm:[&:not(:first-child)]:mt-8 sm:[&:not(:first-child)]:pt-8",
-      )}
+      id={`note-section-${section.id}`}
+      className="wl-card min-w-0 scroll-mt-48 overflow-hidden [&:not(:first-child)]:mt-6"
     >
-      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+      {/* Section header: tinted bar, the title lives right in it. */}
+      <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-border bg-card-tint px-3 py-3 md:flex-nowrap md:px-4">
         <button
           type="button"
           aria-label={`Reorder ${label}`}
           onPointerDown={(event) => controls.start(event)}
           className={cn(
-            "inline-flex size-[34px] shrink-0 cursor-grab touch-none items-center justify-center rounded-full sm:size-[28px]",
-            "text-text-subtle transition-colors hover:bg-surface-2 hover:text-text-muted active:cursor-grabbing",
+            "inline-flex size-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-md",
+            "text-text-subtle transition-colors hover:bg-surface hover:text-text-muted active:cursor-grabbing",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
           )}
         >
           <GripVertical aria-hidden="true" className="size-4" />
         </button>
 
-        <h2 className="text-2xs font-semibold uppercase tracking-[0.1em] text-text-muted sm:text-xs">
+        <span className="shrink-0 rounded-md bg-sidebar px-2 py-1 text-2xs font-bold uppercase tracking-[0.08em] text-sidebar-fg">
           {label}
-        </h2>
-        <span className="text-2xs text-text-subtle sm:text-xs">
+        </span>
+
+        <div className="order-last w-full min-w-0 md:order-none md:w-auto md:flex-1">
+          <label htmlFor={titleId} className="sr-only">Section title</label>
+          <input
+            id={titleId}
+            value={section.title}
+            onChange={(event) => onChange({ ...section, title: event.target.value })}
+            placeholder="Section title"
+            aria-invalid={errors?.[`${path}.title`]?.length ? true : undefined}
+            className="h-11 w-full min-w-0 rounded-lg border border-border-strong bg-surface px-3 text-lg font-semibold tracking-[-0.015em] text-text outline-none transition-[border-color,box-shadow] placeholder:font-normal placeholder:text-text-subtle hover:border-primary focus:border-primary focus:shadow-[0_0_0_3px_var(--c-primary-subtle)] aria-invalid:border-danger"
+          />
+          {errors?.[`${path}.title`]?.length ? (
+            <p role="alert" className="mt-1 px-2 text-xs text-danger">{errors[`${path}.title`][0]}</p>
+          ) : null}
+        </div>
+
+        <span className="ml-auto shrink-0 text-xs font-medium text-text-muted md:ml-0">
           {pageCount} page{pageCount === 1 ? "" : "s"}
         </span>
 
-        <div className="ml-auto flex items-center gap-1">
-          <IconAction label={`Duplicate ${label}`} onClick={onDuplicate}>
+        <ToolbarGroup>
+          <IconAction label={`Duplicate ${label}`} onClick={onDuplicate} tone="copy">
             <Copy aria-hidden="true" className="size-[15px]" />
           </IconAction>
-          <IconAction
-            label={`Delete ${label}`}
-            onClick={onRemove}
-            disabled={!removable}
-            danger
-          >
+          <IconAction label={`Delete ${label}`} onClick={onRemove} disabled={!removable} danger>
             <Trash2 aria-hidden="true" className="size-[15px]" />
           </IconAction>
+          <span className="mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
           <button
             type="button"
             aria-expanded={!collapsed}
             aria-controls={bodyId}
+            aria-label={collapsed ? `Expand ${label}` : `Collapse ${label}`}
+            title={collapsed ? "Expand" : "Collapse"}
             onClick={onToggleCollapse}
             className={cn(
-              "inline-flex h-[34px] items-center gap-1.5 rounded-full border border-transparent px-2.5 sm:h-[28px]",
-              "text-xs font-medium text-text-muted transition-colors",
-              "hover:border-border hover:bg-surface hover:text-text",
+              "inline-flex size-8 items-center justify-center rounded-md bg-card-navy text-accent-text transition-colors",
+              "hover:bg-sidebar hover:text-sidebar-fg",
               "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
             )}
           >
-            {collapsed ? "Expand" : "Collapse"}
-            <ChevronDown
-              aria-hidden="true"
-              className={cn(
-                "size-[15px] transition-transform duration-200",
-                !collapsed && "rotate-180",
-              )}
-            />
+            <ChevronDown aria-hidden="true" className={cn("size-4 transition-transform duration-200", !collapsed && "rotate-180")} />
           </button>
-        </div>
-      </div>
-
-      {/* a title is a short string — it gets a comfortable measure, not the
-          whole 1200px the page now offers */}
-      <div className="mt-3 min-w-0 lg:max-w-[640px]">
-        <Field
-          label="Section title"
-          htmlFor={titleId}
-          errors={errors?.[`${path}.title`]}
-        >
-          <Input
-            id={titleId}
-            value={section.title}
-            onChange={(event) => onChange({ ...section, title: event.target.value })}
-            placeholder="Introduction"
-          />
-        </Field>
+        </ToolbarGroup>
       </div>
 
       <AnimatePresence initial={false}>
@@ -163,14 +154,14 @@ export function SectionEditor({
             }}
             className="min-w-0 overflow-hidden"
           >
-            {/* A left rail rather than a card — pages read as part of the section. */}
-            <div className="mt-4 min-w-0 border-l border-border-strong pl-2.5 sm:mt-5 sm:pl-5">
+            {/* Pages are white cards on the section's light tint. */}
+            <div className="min-w-0 bg-surface-2 p-3 md:p-4">
               <Reorder.Group
                 as="div"
                 axis="y"
                 values={section.pages}
                 onReorder={setPages}
-                className="min-w-0"
+                className="flex min-w-0 flex-col gap-3"
               >
                 {section.pages.map((page, pageIndex) => (
                   <PageEditor
@@ -180,6 +171,8 @@ export function SectionEditor({
                     sectionIndex={index}
                     removable={pageCount > 1}
                     sections={sections}
+                    collapsed={collapsedPages.includes(page.id) && !errors?.[`${path}.pages.${pageIndex}.title`] && !errors?.[`${path}.pages.${pageIndex}.content`]}
+                    onToggleCollapse={() => onTogglePage(page.id)}
                     titleErrors={errors?.[`${path}.pages.${pageIndex}.title`]}
                     contentErrors={errors?.[`${path}.pages.${pageIndex}.content`]}
                     onChange={(next) =>
@@ -211,14 +204,14 @@ export function SectionEditor({
                 type="button"
                 onClick={onAddPage}
                 className={cn(
-                  "mt-5 inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5 sm:min-h-0",
-                  "text-xs font-medium text-text transition-colors",
-                  "hover:border-border-strong hover:bg-surface-2",
+                  "mt-3 flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border-strong/60 px-3 py-2",
+                  "text-sm font-semibold text-text-muted transition-colors",
+                  "hover:border-primary hover:bg-surface hover:text-accent-text",
                   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                 )}
               >
-                <Plus aria-hidden="true" className="size-[14px]" />
-                Add page
+                <Plus aria-hidden="true" className="size-4" />
+                Add page{section.title.trim() ? ` to ${section.title.trim()}` : ""}
               </button>
             </div>
           </motion.div>

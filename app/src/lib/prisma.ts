@@ -11,7 +11,18 @@ import { PrismaClient } from "@/generated/prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
+  /** The class the stashed client was built from. */
+  prismaClass?: typeof PrismaClient;
 };
+
+// After `prisma generate` (a schema change) the client module reloads with a
+// new class, but the stashed instance still knows only the OLD fields and
+// fails with "Unknown field …". Only reuse it if it came from this class.
+const stashed =
+  globalForPrisma.prismaClass === PrismaClient ? globalForPrisma.prisma : undefined;
+if (!stashed && globalForPrisma.prisma) {
+  void globalForPrisma.prisma.$disconnect();
+}
 
 function createPrismaClient() {
   const connectionString = process.env.DATABASE_URL;
@@ -28,11 +39,11 @@ function createPrismaClient() {
   });
 }
 
-export const prisma: PrismaClient =
-  globalForPrisma.prisma ?? createPrismaClient();
+export const prisma: PrismaClient = stashed ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
+  globalForPrisma.prismaClass = PrismaClient;
 }
 
 export default prisma;

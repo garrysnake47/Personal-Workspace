@@ -14,6 +14,22 @@ import type { ReactNode } from "react";
  * `enableCssLayer` puts MUI in `@layer mui` (declared first in globals.css),
  * so Tailwind utilities passed via `className` still win.
  */
+/**
+ * Where MUI popups (Autocomplete lists, Select menus) are portalled.
+ *
+ * MUI portals to <body>, but our Modal / ConfirmationDialog are native
+ * `<dialog>`s opened with showModal(), which puts them in the browser's top
+ * layer ABOVE everything in <body> — so a dropdown inside a popup opened
+ * invisibly behind it. Portal into the open modal dialog instead (the last one
+ * when nested). Outside a dialog, portal into `.app-shell` so popups still
+ * inherit the workspace tokens that are scoped there; <body> only as a last
+ * resort.
+ */
+function portalContainer(): HTMLElement {
+  const open = document.querySelectorAll<HTMLDialogElement>("dialog:modal");
+  return open[open.length - 1] ?? document.querySelector<HTMLElement>(".app-shell") ?? document.body;
+}
+
 const theme = createTheme({
   palette: {
     primary: { main: "#3c6e71", contrastText: "#ffffff" },
@@ -23,6 +39,10 @@ const theme = createTheme({
   shape: { borderRadius: 10 },
   typography: { fontFamily: "inherit" },
   components: {
+    // `fixed` so a list inside a dialog is placed against the viewport and not
+    // clipped by the dialog's `overflow: hidden`.
+    MuiPopper: { defaultProps: { container: portalContainer, popperOptions: { strategy: "fixed" } } },
+    MuiPopover: { defaultProps: { container: portalContainer } },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
@@ -30,8 +50,10 @@ const theme = createTheme({
           color: "var(--c-text)",
           fontSize: "var(--text-base)",
           fontWeight: 500,
-          "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--c-border-strong)", transition: "border-color 150ms ease" },
+          transition: "box-shadow var(--duration-quick) ease-out",
+          "& .MuiOutlinedInput-notchedOutline": { borderColor: "var(--c-border-strong)", transition: "border-color var(--duration-quick) ease-out" },
           "&:hover:not(.Mui-disabled):not(.Mui-focused) .MuiOutlinedInput-notchedOutline": { borderColor: "var(--c-primary)" },
+          "&.Mui-focused": { boxShadow: "var(--sh-focus)" },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "var(--c-primary)", borderWidth: 2 },
           "&.Mui-error .MuiOutlinedInput-notchedOutline": { borderColor: "var(--c-danger)" },
           "&.Mui-disabled": { backgroundColor: "var(--c-surface-2)", opacity: 0.7 },

@@ -12,6 +12,7 @@ import { Badge, TicketId } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { ProjectInput } from "@/components/ui/project-input";
 import { Select } from "@/components/ui/select";
 import { MarkdownEditor } from "@/components/work-log/markdown-editor";
 import {
@@ -20,7 +21,7 @@ import {
   TicketStatusBadge,
 } from "@/components/ui/ticket-status-badge";
 import { TicketHistory } from "@/components/work-log/ticket-history";
-import { toHistory, type HistoryEntry } from "@/components/work-log/types";
+import { toMergedHistory, type HistoryEntry } from "@/components/work-log/types";
 import type { WorkflowStatus } from "@/lib/workflow-status";
 
 /**
@@ -41,11 +42,12 @@ type Found = {
   id: string;
   ticketKey: string;
   title: string;
+  projectName: string | null;
   status: WorkflowStatus;
   history: HistoryEntry[];
 };
 
-type TicketOption = { ticketKey: string; title: string; status: WorkflowStatus };
+type TicketOption = { ticketKey: string; title: string; projectName: string | null; status: WorkflowStatus };
 
 type LookupState =
   | { kind: "empty" }
@@ -75,6 +77,7 @@ export function TicketSearch({
   onAttach: (input: {
     ticketKey: string;
     title?: string;
+    projectName?: string;
     status?: WorkflowStatus;
     description?: string;
   }) => Promise<boolean>;
@@ -93,7 +96,11 @@ export function TicketSearch({
 
   // New-ticket draft (only used when the key is not found).
   const [newTitle, setNewTitle] = useState("");
+  const [newProject, setNewProject] = useState("");
   const [newStatus, setNewStatus] = useState<WorkflowStatus>("InProgress");
+  /** Status to set when attaching an EXISTING ticket — starts at its current status. */
+  const [foundStatus, setFoundStatus] = useState<WorkflowStatus>("InProgress");
+  const [foundProject, setFoundProject] = useState("");
   const [workDescription, setWorkDescription] = useState("");
 
   const [attaching, startAttach] = useTransition();
@@ -114,7 +121,7 @@ export function TicketSearch({
   const loadOptions = useCallback(async () => {
     const result = await listTickets({ take: 200 });
     if (result.ok && aliveRef.current) {
-      setOptions(result.data.items.map((t) => ({ ticketKey: t.ticketId, title: t.title, status: t.status })));
+      setOptions(result.data.items.map((t) => ({ ticketKey: t.ticketId, title: t.title, projectName: t.projectName, status: t.status })));
     }
   }, []);
   useEffect(() => {
@@ -139,19 +146,24 @@ export function TicketSearch({
 
     if (result.data.found) {
       const t = result.data.ticket;
+      setFoundStatus(t.status);
+      setFoundProject(t.projectName ?? "");
       setState({
         kind: "found",
         ticket: {
           id: t.id,
           ticketKey: t.ticketId,
           title: t.title,
+          projectName: t.projectName,
           status: t.status,
-          history: toHistory(t.updates),
+          history: toMergedHistory(t.updates, t.historyEntries),
         },
       });
     } else {
       setState({ kind: "missing", ticketKey: result.data.ticketKey });
       setNewTitle("");
+    setNewProject("");
+      setNewProject("");
       setNewStatus("InProgress");
     }
   }, []);
@@ -186,7 +198,7 @@ export function TicketSearch({
     searchRef.current?.focus();
   }
 
-  function attach(input: { ticketKey: string; title?: string; status?: WorkflowStatus; description?: string }) {
+  function attach(input: { ticketKey: string; title?: string; projectName?: string; status?: WorkflowStatus; description?: string }) {
     startAttach(async () => {
       const ok = await onAttach(input);
       if (ok && aliveRef.current) {
@@ -204,7 +216,7 @@ export function TicketSearch({
       return;
     }
     if (state.kind === "found") {
-      attach({ ticketKey: state.ticket.ticketKey, description: workDescription });
+      attach({ ticketKey: state.ticket.ticketKey, description: workDescription, status: foundStatus });
       return;
     }
     if (state.kind === "missing") {
@@ -235,7 +247,7 @@ export function TicketSearch({
           filterOptions={(list, { inputValue }) => {
             const needle = inputValue.trim().toLowerCase();
             if (!needle) return list.slice(0, 8);
-            return list.filter((option) => option.ticketKey.toLowerCase().includes(needle) || option.title.toLowerCase().includes(needle)).slice(0, 8);
+            return list.filter((option) => option.ticketKey.toLowerCase().includes(needle) || option.title.toLowerCase().includes(needle) || (option.projectName ?? "").toLowerCase().includes(needle)).slice(0, 8);
           }}
           onInputChange={(_event, next, reason) => {
             if (reason === "reset") return;
@@ -264,7 +276,7 @@ export function TicketSearch({
               <li key={optionKey} {...optionProps}>
                 <span className="flex w-full min-w-0 items-center gap-3">
                   <TicketId className="shrink-0">{option.ticketKey}</TicketId>
-                  <span className="min-w-0 flex-1 truncate text-sm text-text-muted">{option.title}</span>
+                  <span className="min-w-0 flex-1 truncate text-sm text-text-muted">{option.title}{option.projectName ? <span className="ml-2 text-xs font-medium text-accent-text">· {option.projectName}</span> : null}</span>
                   <TicketStatusBadge status={option.status} />
                 </span>
               </li>
@@ -275,7 +287,7 @@ export function TicketSearch({
             <TextField
               {...params}
               inputRef={searchRef}
-              placeholder="Search or enter Ticket ID..."
+              placeholder="Search or enter a ticket ID…"
               slotProps={{
                 ...params.slotProps,
                 input: {
@@ -351,18 +363,31 @@ export function TicketSearch({
 
             </div>
 
-            <Field label="What did you do?" htmlFor={`${uid}-found-work`} className="mt-4">
-              <MarkdownEditor
-                id={`${uid}-found-work`}
-                value={workDescription}
-                placeholder="Add the work you completed for this ticket…"
-                ariaLabel="Work completed for this ticket"
-                minHeight="min-h-24"
-                onChange={setWorkDescription}
-              />
-            </Field>
+            <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_14rem] lg:items-start">
+              <Field label="What did you do?" htmlFor={`${uid}-found-work`} className="min-w-0">
+                <MarkdownEditor
+                  id={`${uid}-found-work`}
+                  value={workDescription}
+                  ariaLabel="Work completed for this ticket"
+                  minHeight="min-h-24"
+                  onChange={setWorkDescription}
+                />
+              </Field>
+              <div className="flex min-w-0 flex-col gap-4">
+                <Field label="Status" htmlFor={`${uid}-found-status`} className="min-w-0">
+                  <Select id={`${uid}-found-status`} value={foundStatus} onChange={(event) => setFoundStatus(event.target.value as WorkflowStatus)}>
+                    {TICKET_STATUS_ORDER.map((option) => (
+                      <option key={option} value={option}>{TICKET_STATUS_LABELS[option]}</option>
+                    ))}
+                  </Select>
+                </Field>
+                <Field label="Project / site" htmlFor={`${uid}-found-project`} className="min-w-0">
+                  <ProjectInput id={`${uid}-found-project`} value={foundProject} onValueChange={setFoundProject} />
+                </Field>
+              </div>
+            </div>
             <div className="mt-3 flex justify-end">
-              <Button onClick={() => attach({ ticketKey: state.ticket.ticketKey, description: workDescription })} loading={attaching}>
+              <Button onClick={() => attach({ ticketKey: state.ticket.ticketKey, description: workDescription, status: foundStatus, projectName: foundProject.trim() })} loading={attaching}>
                 <Plus aria-hidden="true" />
                 Add ticket + work
               </Button>
@@ -425,12 +450,17 @@ export function TicketSearch({
                       attach({
                         ticketKey: state.ticketKey,
                         title: newTitle.trim() || undefined,
+                        projectName: newProject.trim() || undefined,
                         status: newStatus,
                         description: workDescription,
                       });
                     }
                   }}
                 />
+              </Field>
+
+              <Field label="Project / site" htmlFor={`${uid}-project`} className="min-w-0" hint="Optional — which project or site this ticket is for.">
+                <ProjectInput id={`${uid}-project`} value={newProject} onValueChange={setNewProject} />
               </Field>
 
               <Field label="Initial status" htmlFor={`${uid}-status`} className="min-w-0">
@@ -451,7 +481,6 @@ export function TicketSearch({
                 <MarkdownEditor
                   id={`${uid}-new-work`}
                   value={workDescription}
-                  placeholder="What did you do for this ticket today?"
                   ariaLabel="Initial work completed for this ticket"
                   minHeight="min-h-28"
                   onChange={setWorkDescription}
@@ -465,6 +494,7 @@ export function TicketSearch({
                   attach({
                     ticketKey: state.ticketKey,
                     title: newTitle.trim() || undefined,
+                    projectName: newProject.trim() || undefined,
                     status: newStatus,
                     description: workDescription,
                   })

@@ -140,16 +140,19 @@ export type LoginInput = z.input<typeof loginSchema>;
 
 // --- work log ---------------------------------------------------------------
 
+export const dayTypeSchema = z.enum(["Work", "Holiday", "Leave"]);
+
 export const workLogDateSchema = z.object({
   date: dateOnlySchema,
   title: cleanLine(160).optional(),
-  projectName: optionalCleanLine(160),
+  /** Only applied when the log is created. */
+  dayType: dayTypeSchema.optional(),
 });
 
 export const updateWorkLogSchema = z.object({
   workLogId: idSchema,
   title: cleanLine(160).optional(),
-  projectName: optionalCleanLine(160),
+  dayType: dayTypeSchema.optional(),
 });
 
 export const deleteWorkLogSchema = z.object({ workLogId: idSchema });
@@ -170,6 +173,26 @@ export const updateMeetingSchema = z.object({
 
 export const deleteMeetingSchema = z.object({ meetingId: idSchema });
 
+// --- learning & attachments ------------------------------------------------
+
+export const saveLearningNotesSchema = z.object({
+  workLogId: idSchema,
+  notes: richText(20_000),
+});
+
+export const addWorkLogLinkSchema = z.object({
+  workLogId: idSchema,
+  url: z
+    .string()
+    .trim()
+    .max(2000)
+    .url("Enter a full link, e.g. https://example.com")
+    .refine((value) => /^https?:\/\//i.test(value), "Only http(s) links are allowed"),
+  label: optionalCleanLine(160),
+});
+
+export const deleteWorkLogAttachmentSchema = z.object({ attachmentId: idSchema });
+
 // --- tickets ----------------------------------------------------------------
 
 /** "asu-1234" -> "ASU-1234". Letters/digits/dash/underscore only. */
@@ -189,6 +212,8 @@ export const upsertTicketForWorkLogSchema = z.object({
   workLogId: idSchema,
   ticketKey: ticketKeySchema,
   title: cleanLine(300).optional(),
+  /** Project / site — used only when the ticket has to be created. */
+  projectName: optionalCleanLine(160),
   status: ticketStatusSchema.optional(),
 });
 
@@ -219,6 +244,7 @@ export const detachTicketFromWorkLogSchema = z.object({
 export const updateTicketSchema = z.object({
   ticketId: idSchema,
   title: cleanLine(300).optional(),
+  projectName: optionalCleanLine(160),
   status: ticketStatusSchema.optional(),
 });
 
@@ -332,11 +358,11 @@ export const createFollowUpSchema = z
         message: "Who did you update?",
       });
     }
-    if (value.kind === "Note" && value.dueDate) {
+    if ((value.kind === "Note" || value.kind === "Idea") && value.dueDate) {
       ctx.addIssue({
         code: "custom",
         path: ["dueDate"],
-        message: "A note has no due date — log it as a task instead",
+        message: "Notes and ideas have no due date — log it as a task instead",
       });
     }
   });
@@ -347,6 +373,11 @@ export const addFollowUpUpdateSchema = z.object({
   note: z.string().trim().min(1, "Write what you told them").max(10_000),
   channel: followUpChannelSchema.optional(),
   occurredAt: optionalDateSchema,
+});
+
+export const setFollowUpPinnedSchema = z.object({
+  followUpId: idSchema,
+  pinned: z.boolean(),
 });
 
 export const setFollowUpStatusSchema = z.object({
@@ -360,3 +391,15 @@ export const rescheduleFollowUpSchema = z.object({
 });
 
 export const deleteFollowUpSchema = z.object({ followUpId: idSchema });
+
+// --- profile ---------------------------------------------------------------
+
+export const updateProfileSchema = z.object({
+  name: z.string().trim().max(80, "Keep the name under 80 characters"),
+  /** "YYYY-MM-DD", or null to use the app default. */
+  sprintStartDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a valid date").nullable(),
+  sprintLengthDays: z.number().int().min(5, "At least 5 days").max(42, "At most 6 weeks"),
+  ticketsEnabled: z.boolean(),
+});
+
+export const toggleResourceFavoriteSchema =z.object({ resourceId: idSchema, favorite: z.boolean() });

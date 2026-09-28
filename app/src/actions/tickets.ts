@@ -13,6 +13,7 @@ import {
   findTicketByKeyWithHistory,
   getTicketWithHistory,
   listActiveTickets as listActiveTicketsQuery,
+  listProjectNames as listProjectNamesQuery,
   listTickets as listTicketsQuery,
   updateTicket as updateTicketRow,
   upsertTicketForWorkLog as upsertTicketRow,
@@ -39,7 +40,6 @@ import {
 
 function revalidateTickets(ticketId?: string, workLogId?: string) {
   revalidatePath("/tickets");
-  revalidatePath("/dashboard");
   if (ticketId) revalidatePath(`/tickets/${ticketId}`);
   if (workLogId) revalidatePath(`/work-logs/${workLogId}`);
 }
@@ -158,6 +158,12 @@ export async function listTickets(input?: unknown) {
       skip: parsed.data.skip,
     }),
   );
+}
+
+/** Project / site names already used on tickets — feeds the project autocomplete. */
+export async function listProjects() {
+  const userId = await requireUserId();
+  return ok(await listProjectNamesQuery(userId));
 }
 
 /** Dashboard card — Open / In Progress / Blocked. */

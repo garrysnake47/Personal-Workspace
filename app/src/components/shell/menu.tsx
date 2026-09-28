@@ -85,8 +85,9 @@ export function Menu({
             }
             setOpen(false);
           }}
+          data-origin={align === "end" ? "top-right" : "top-left"}
           className={cn(
-            "absolute top-full z-50 mt-2 min-w-48 rounded-lg border border-border bg-surface p-1 shadow-md",
+            "t-dropdown absolute top-full z-50 mt-2 min-w-52 rounded-xl border border-border bg-surface p-1.5 shadow-md",
             align === "end" ? "right-0" : "left-0",
           )}
         >
@@ -99,7 +100,7 @@ export function Menu({
 
 /** A row inside `<Menu>`. 32px tall, 16px icon — design.md §9. */
 export const menuItemClass = cn(
-  "flex h-10 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-sm font-medium text-text-muted",
+  "flex h-10 w-full cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium text-text-muted",
   "transition-colors duration-150 ease-standard",
   "hover:bg-surface-2 hover:text-text active:bg-surface-3",
   "[&_svg]:size-4 [&_svg]:shrink-0",

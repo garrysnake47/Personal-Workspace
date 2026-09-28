@@ -68,21 +68,6 @@
   letter-spacing: -0.055em;
   text-decoration: none;
 }
-.auth-shell .pf-theme-toggle {
-  display: grid;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  border: 1px solid var(--c-border-strong);
-  border-radius: 999px;
-  background: var(--c-surface);
-  color: var(--c-text);
-  cursor: pointer;
-  transition: background-color 180ms ease, border-color 180ms ease;
-}
-.auth-shell .pf-theme-toggle:hover { background: var(--c-surface-2); }
-.auth-shell .pf-theme-toggle-icon { display: grid; place-items: center; }
-.auth-shell .pf-theme-toggle svg { width: 18px; height: 18px; }
 
 .auth-layout {
   display: grid;

@@ -239,7 +239,7 @@ export function MarkdownEditor({
   value,
   onChange,
   onBlur,
-  placeholder = "Write an update… type * then Space for a list",
+  placeholder,
   ariaLabel,
   className,
   minHeight = "min-h-28",
