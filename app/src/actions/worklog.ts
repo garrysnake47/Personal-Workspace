@@ -12,8 +12,12 @@ import {
   getWorkLogByDate,
   getWorkLogById,
   listWorkLogs as listWorkLogsQuery,
+  getAdjacentWorkLogs as getAdjacentWorkLogsQuery,
   todayUtc,
   updateWorkLogDetails,
+  saveLearningNotesRow,
+  addLinkAttachment,
+  deleteAttachmentRow,
   updateMeeting as updateMeetingRow,
 } from "@/lib/worklogs";
 import {
@@ -23,6 +27,9 @@ import {
   updateMeetingSchema,
   updateWorkLogSchema,
   workLogDateSchema,
+  saveLearningNotesSchema,
+  addWorkLogLinkSchema,
+  deleteWorkLogAttachmentSchema,
 } from "@/lib/validation";
 
 /**
@@ -34,7 +41,6 @@ import {
 
 function revalidateWorkLog(workLogId?: string) {
   revalidatePath("/work-logs");
-  revalidatePath("/dashboard");
   if (workLogId) {
     revalidatePath(`/work-logs/${workLogId}`);
     revalidatePath(`/work-logs/${workLogId}/edit`);
@@ -58,11 +64,15 @@ export async function openTodayWorkLog() {
   return ok(workLog);
 }
 
-/** Open (or create) a dated work log. Input: { date, title?, projectName? } */
+/** Open (or create) a dated work log. Input: { date, title?, dayType? } — dayType applies on create. */
 export async function openWorkLogForDate(input: unknown) {
   const userId = await requireUserId();
   const parsed = parseOrFail(workLogDateSchema, input);
   if (!parsed.ok) return parsed;
+  // Logs record what happened — only today and past days can be logged.
+  if (parsed.data.date.getTime() > todayUtc().getTime()) {
+    return fail("VALIDATION_ERROR", "You can't log a future date");
+  }
 
   const existing = await getWorkLogByDate(userId, parsed.data.date);
   if (existing) {
@@ -77,7 +87,7 @@ export async function openWorkLogForDate(input: unknown) {
     userId,
     parsed.data.date,
     parsed.data.title,
-    parsed.data.projectName,
+    parsed.data.dayType,
   );
   revalidateWorkLog(workLog.id);
   return ok(workLog);
@@ -89,6 +99,13 @@ export async function getWorkLog(workLogId: string) {
   const workLog = await getWorkLogById(userId, workLogId);
   if (!workLog) return notFound("Work log not found");
   return ok(workLog);
+}
+
+export async function getAdjacentWorkLogs(workLogId: string) {
+  const userId = await requireUserId();
+  const adjacent = await getAdjacentWorkLogsQuery(userId, workLogId);
+  if (!adjacent) return notFound("Work log not found");
+  return ok(adjacent);
 }
 
 export async function listWorkLogs(options?: {
@@ -112,16 +129,16 @@ export async function listWorkLogs(options?: {
   );
 }
 
-/** Update work-log identity fields. Input: { workLogId, title?, projectName? } */
+/** Update the work-log title and/or day type. Input: { workLogId, title?, dayType? } */
 export async function updateWorkLog(input: unknown) {
   const userId = await requireUserId();
   const parsed = parseOrFail(updateWorkLogSchema, input);
   if (!parsed.ok) return parsed;
 
-  const { workLogId, title, projectName } = parsed.data;
-  if (title === undefined && projectName === undefined) return fail("VALIDATION_ERROR", "Nothing to update");
+  const { workLogId, title, dayType } = parsed.data;
+  if (title === undefined && dayType === undefined) return fail("VALIDATION_ERROR", "Nothing to update");
 
-  const workLog = await updateWorkLogDetails(userId, workLogId, { title, projectName });
+  const workLog = await updateWorkLogDetails(userId, workLogId, { title, dayType });
   if (!workLog) return notFound("Work log not found");
 
   revalidateWorkLog(workLogId);
@@ -181,6 +198,39 @@ export async function deleteMeeting(input: unknown) {
   const removed = await deleteMeetingRow(userId, parsed.data.meetingId);
   if (!removed) return notFound("Meeting not found");
 
+  revalidateWorkLog();
+  return ok({ deleted: true });
+}
+
+
+/** Autosave the day's learning / upskilling notes. Input: { workLogId, notes } */
+export async function saveLearningNotes(input: unknown) {
+  const userId = await requireUserId();
+  const parsed = parseOrFail(saveLearningNotesSchema, input);
+  if (!parsed.ok) return parsed;
+  const saved = await saveLearningNotesRow(userId, parsed.data.workLogId, parsed.data.notes);
+  if (!saved) return notFound("Work log not found");
+  return ok({ savedAt: new Date() });
+}
+
+/** Add a link to a work log. Input: { workLogId, url, label? } */
+export async function addWorkLogLink(input: unknown) {
+  const userId = await requireUserId();
+  const parsed = parseOrFail(addWorkLogLinkSchema, input);
+  if (!parsed.ok) return parsed;
+  const link = await addLinkAttachment(userId, parsed.data.workLogId, { url: parsed.data.url, label: parsed.data.label });
+  if (!link) return notFound("Work log not found");
+  revalidateWorkLog(parsed.data.workLogId);
+  return ok(link);
+}
+
+/** Remove a file or link from a work log. Input: { attachmentId } */
+export async function deleteWorkLogAttachment(input: unknown) {
+  const userId = await requireUserId();
+  const parsed = parseOrFail(deleteWorkLogAttachmentSchema, input);
+  if (!parsed.ok) return parsed;
+  const removed = await deleteAttachmentRow(userId, parsed.data.attachmentId);
+  if (!removed) return notFound("Attachment not found");
   revalidateWorkLog();
   return ok({ deleted: true });
 }

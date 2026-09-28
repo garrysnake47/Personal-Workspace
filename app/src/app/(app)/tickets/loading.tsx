@@ -1,6 +1,6 @@
 export default function TicketsLoading() {
   return (
-    <div aria-label="Loading tickets" aria-busy="true" className="mx-auto w-full max-w-[76rem] animate-pulse">
+    <div aria-label="Loading tickets" aria-busy="true" className="w-full animate-pulse">
       <div className="h-12 w-52 rounded-lg bg-surface-3" />
       <div className="mt-3 h-5 w-full max-w-xl rounded bg-surface-2" />
       <div className="mt-6 grid gap-3 border-y border-border py-4 md:grid-cols-[minmax(0,1fr)_15rem]">

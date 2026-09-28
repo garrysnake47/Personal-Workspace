@@ -26,8 +26,8 @@ function isRedirectError(error: unknown): boolean {
  * so the action must not rely on client-side sanitisation alone.
  */
 function safeRedirectPath(raw: string): string {
-  if (!raw.startsWith("/")) return "/work-logs";
-  if (raw.startsWith("//") || raw.startsWith("/\\")) return "/work-logs";
+  if (!raw.startsWith("/")) return "/tracker";
+  if (raw.startsWith("//") || raw.startsWith("/\\")) return "/tracker";
   return raw;
 }
 
@@ -76,7 +76,7 @@ export async function register(
  */
 export async function login(
   input: unknown,
-  redirectTo = "/work-logs",
+  redirectTo = "/tracker",
 ): Promise<ActionResult<never>> {
   const parsed = parseOrFail(loginSchema, input);
   if (!parsed.ok) return parsed;

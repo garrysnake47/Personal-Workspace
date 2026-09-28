@@ -106,7 +106,7 @@ export default async function NotePage({
                 name="note-section"
                 open={index === 0}
                 style={{ "--motion-index": index } as React.CSSProperties}
-                className="motion-stagger scroll-reveal-item group min-w-0 scroll-mt-20 overflow-hidden rounded-lg border border-border bg-card"
+                className="motion-stagger scroll-reveal-item group min-w-0 scroll-mt-20 overflow-hidden rounded-xl border border-border-strong bg-card"
               >
                 <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3">
                   <span
@@ -133,11 +133,11 @@ export default async function NotePage({
                 </summary>
 
                 {section.pages.length === 0 ? (
-                  <p className="border-t border-border px-4 py-6 text-center text-sm text-text-muted">
+                  <p className="border-t border-border-strong px-4 py-6 text-center text-sm text-text-muted">
                     No pages in this section.
                   </p>
                 ) : (
-                  <div className="motion-disclosure-content flex flex-col gap-3 border-t border-border p-3 md:p-4">
+                  <div className="motion-disclosure-content flex flex-col gap-3 border-t border-border-strong bg-surface-2 p-3 md:p-4">
                     {section.pages.map((page) => {
                       // Only what is plausibly on screen at load mounts its
                       // editor eagerly — see NoteViewer.
@@ -146,9 +146,9 @@ export default async function NotePage({
                         <article
                           key={page.id}
                           id={pageAnchor(page.id)}
-                          className="min-w-0 scroll-mt-20 overflow-hidden rounded-md border border-border bg-surface"
+                          className="min-w-0 scroll-mt-20 overflow-hidden rounded-lg border border-border-strong bg-surface"
                         >
-                          <h3 className="border-b border-border px-4 py-2.5 text-sm font-semibold text-text">
+                          <h3 className="border-b border-border-strong bg-card-tint px-4 py-2.5 text-sm font-semibold text-text">
                             {page.title}
                           </h3>
                           <div className="px-4 py-4">

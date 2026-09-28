@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 
-import { ThemeProvider } from "@/components/theme/theme-provider";
 import { Toaster } from "@/components/ui/toast";
 
 /**
@@ -11,9 +10,9 @@ import { Toaster } from "@/components/ui/toast";
  */
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider>
+    <>
       {children}
       <Toaster />
-    </ThemeProvider>
+    </>
   );
 }

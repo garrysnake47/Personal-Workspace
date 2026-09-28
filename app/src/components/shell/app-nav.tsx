@@ -1,22 +1,22 @@
 "use client";
 
 import { format } from "date-fns";
-import { LogOut, Menu as MenuIcon, SquareStack, X } from "lucide-react";
+import { LogOut, Menu as MenuIcon, SquareStack, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 
 import { logout } from "@/actions/auth";
 import { cn } from "@/components/cn";
-import { BackButton } from "@/components/shell/back-button";
 import { Menu, MenuSeparator, menuItemClass } from "@/components/shell/menu";
-import { PRIMARY_NAV, isActivePath } from "@/components/shell/nav-items";
-import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { isActivePath, navFor } from "@/components/shell/nav-items";
 
 export type ShellUser = {
   id: string;
   name: string | null;
   email: string | null;
+  /** Profile setting: hides the Tickets section when off. */
+  ticketsEnabled: boolean;
 };
 
 /**
@@ -41,6 +41,7 @@ export function AppNav({
   todayLabel: string;
 }) {
   const pathname = usePathname();
+  const sections = navFor(user.ticketsEnabled);
 
   // The sheet is open FOR a route, not open in the abstract. Navigating changes
   // `pathname`, so it closes itself during render — no effect, no cascading
@@ -61,6 +62,10 @@ export function AppNav({
   // The server's timezone is not necessarily the user's, so the date is read as
   // an external store: server snapshot is what was rendered, client snapshot is
   // the browser's own clock. No effect, no cascading render.
+  const sectionsRef = useRef<HTMLUListElement>(null);
+  const pillRef = useRef<HTMLSpanElement>(null);
+  useSlidingPill(sectionsRef, pillRef, pathname);
+
   const today = useSyncExternalStore(
     subscribeNever,
     () => format(new Date(), "EEE, d MMM yyyy"),
@@ -73,8 +78,10 @@ export function AppNav({
         <div
           id="app-nav"
           className={cn(
+            // 64px at every size (Linear/taste cap: 64–72px). Everything in the
+            // bar is single-line: labels never wrap, extras appear as room allows.
             "flex h-16 items-center gap-3 bg-bg text-text",
-            "px-0 md:h-[5.5rem] md:gap-4",
+            "px-0 md:gap-4",
             // Three columns from md so the sections sit dead centre regardless
             // of how wide the brand or the account block happen to be.
             "md:grid md:grid-cols-[1fr_auto_1fr]",
@@ -84,48 +91,45 @@ export function AppNav({
               md, so a fourth top-level child would wrap onto a second row. */}
           <div className="flex shrink-0 items-center gap-1 md:justify-self-start">
             <Link
-              href="/dashboard"
+              href="/tracker"
               className="flex shrink-0 items-center gap-2 rounded-md"
               aria-label="WorkNest — home"
             >
               <span
                 aria-hidden="true"
-                className="grid size-8 place-items-center rounded-md bg-text text-text-inverse"
+                className="grid size-8 place-items-center rounded-lg bg-sidebar text-sidebar-fg shadow-button"
               >
                 <SquareStack className="size-4" />
               </span>
-              <span className="hidden text-lg font-extrabold tracking-tight text-text xs:inline">
+              {/* Hidden 768–1023: the six section links need the room there. */}
+              <span className="hidden text-lg font-semibold tracking-[-0.03em] whitespace-nowrap text-text xs:inline md:hidden lg:inline">
                 WorkNest
               </span>
             </Link>
 
-            <BackButton />
           </div>
 
           {/* Sections — desktop only; the sheet below carries them on phones. */}
           <nav aria-label="Sections" className="hidden min-w-0 md:block md:justify-self-center">
-            <ul className="flex items-center gap-1 lg:gap-2">
-              {PRIMARY_NAV.map((item) => {
+            <ul ref={sectionsRef} className="relative flex items-center gap-1 lg:gap-1.5">
+              <span ref={pillRef} aria-hidden="true" className="t-nav-pill" />
+              {sections.map((item) => {
                 const active = isActivePath(pathname, item);
                 return (
-                  <li key={item.href}>
+                  <li key={item.href} className="relative z-10">
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "relative inline-flex h-10 items-center gap-2 rounded-md px-3 text-sm font-semibold",
+                        "inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-medium whitespace-nowrap xl:px-3.5",
                         "transition-colors duration-150 ease-standard",
-                        // The current section is marked by a rule under the
-                        // label, not a filled chip. The rule is always in the
-                        // DOM and only fades, so nothing reflows on navigation.
-                        "after:absolute after:inset-x-3 after:bottom-1 after:h-0.5 after:rounded-full",
-                        "after:bg-text after:transition-opacity after:duration-150",
-                        active
-                          ? "text-text after:opacity-100"
-                          : "text-text-muted hover:text-text after:opacity-0",
+                        active ? "text-text" : "text-text-muted hover:text-text",
                       )}
                     >
-                      <item.icon className="size-4 shrink-0" aria-hidden="true" />
+                      <item.icon
+                        className={cn("hidden size-4 shrink-0 transition-colors duration-150 xl:block", active && "text-primary")}
+                        aria-hidden="true"
+                      />
                       {item.label}
                     </Link>
                   </li>
@@ -137,7 +141,7 @@ export function AppNav({
           <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0 md:justify-self-end">
             <time
               dateTime={new Date().toISOString().slice(0, 10)}
-              className="hidden text-sm font-medium text-text-subtle lg:block"
+              className="hidden text-sm font-medium whitespace-nowrap text-text-subtle tabular-nums xl:block"
               suppressHydrationWarning
             >
               {today}
@@ -170,21 +174,15 @@ export function AppNav({
 
               <MenuSeparator />
 
-              <div
-                className="flex items-center justify-between gap-2 px-2 py-1"
-                // Choosing a theme shouldn't dismiss the menu.
-                onClick={(event) => event.stopPropagation()}
-              >
-                <span className="text-sm font-medium text-text-muted">Theme</span>
-                <ThemeToggle />
-              </div>
-
-              <MenuSeparator />
+              <Link href="/profile" role="menuitem" className={menuItemClass}>
+                <UserRound aria-hidden="true" />
+                Profile &amp; settings
+              </Link>
 
               <form action={logout}>
                 <button type="submit" role="menuitem" className={menuItemClass}>
                   <LogOut aria-hidden="true" />
-                  Logout
+                  Log out
                 </button>
               </form>
             </Menu>
@@ -219,10 +217,10 @@ export function AppNav({
           <nav
             id="app-mobile-menu"
             aria-label="Sections"
-            className="mt-2 rounded-2xl border border-border bg-surface p-2 shadow-md md:hidden"
+            className="t-sheet mt-2 mb-3 rounded-2xl border border-border bg-surface p-2 shadow-md md:hidden"
           >
             <ul className="flex flex-col">
-              {PRIMARY_NAV.map((item) => {
+              {sections.map((item) => {
                 const active = isActivePath(pathname, item);
                 return (
                   <li key={item.href}>
@@ -230,11 +228,11 @@ export function AppNav({
                       href={item.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "flex min-h-11 items-center gap-3 rounded-md px-3 py-2.5 text-md font-semibold",
-                        "transition-colors duration-150 ease-standard hover:bg-surface-2",
+                        "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-md font-medium",
+                        "transition-colors duration-150 ease-standard",
                         active
-                          ? "text-text underline decoration-2 underline-offset-4"
-                          : "text-text-muted",
+                          ? "bg-card-tint text-text [&_svg]:text-primary"
+                          : "text-text-muted hover:bg-surface-2 hover:text-text",
                       )}
                     >
                       <item.icon className="size-5 shrink-0" aria-hidden="true" />
@@ -243,16 +241,54 @@ export function AppNav({
                   </li>
                 );
               })}
-              <li className="flex items-center justify-between gap-3 border-t border-border px-3 py-2">
-                <span className="text-sm font-semibold text-text-muted">Theme</span>
-                <ThemeToggle />
-              </li>
             </ul>
           </nav>
         ) : null}
       </div>
     </header>
   );
+}
+
+/**
+ * Slides the active-section pill under the current link.
+ * Measured after layout, on route change and on resize. The very first
+ * placement skips the transition so the pill doesn't sweep in from the left.
+ */
+function useSlidingPill(
+  listRef: RefObject<HTMLUListElement | null>,
+  pillRef: RefObject<HTMLSpanElement | null>,
+  pathname: string,
+) {
+  const placed = useRef(false);
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const pill = pillRef.current;
+    if (!list || !pill) return;
+
+    function place() {
+      if (!list || !pill) return;
+      const active = list.querySelector<HTMLElement>('a[aria-current="page"]');
+      if (!active) {
+        pill.dataset.ready = "false";
+        return;
+      }
+      const first = !placed.current;
+      if (first) pill.style.transition = "none";
+      pill.style.width = `${active.offsetWidth}px`;
+      pill.style.transform = `translateX(${active.parentElement?.offsetLeft ?? 0}px)`;
+      pill.dataset.ready = "true";
+      if (first) {
+        void pill.offsetWidth; // commit the jump before re-enabling transitions
+        pill.style.transition = "";
+        placed.current = true;
+      }
+    }
+
+    place();
+    const observer = new ResizeObserver(place);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [listRef, pillRef, pathname]);
 }
 
 /** The clock never notifies us; a re-render is close enough for a date. */

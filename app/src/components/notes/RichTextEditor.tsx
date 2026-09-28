@@ -99,7 +99,7 @@ function ToolButton({
       onClick={onClick}
       className={cn(
         // a touch larger on phones, where the pointer is a fingertip
-        "inline-flex size-[34px] shrink-0 items-center justify-center rounded-full border sm:size-[30px]",
+        "inline-flex size-[34px] shrink-0 items-center justify-center rounded-full border md:size-[30px]",
         "transition-colors duration-150",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-40",
@@ -118,7 +118,7 @@ function Divider() {
   return (
     <span
       aria-hidden="true"
-      className="mx-0.5 hidden h-5 w-px shrink-0 self-center bg-border sm:block"
+      className="mx-0.5 hidden h-5 w-px shrink-0 self-center bg-border md:block"
     />
   );
 }
@@ -135,7 +135,7 @@ function Group({ children }: { children: ReactNode }) {
  */
 function Advanced({ open, children }: { open: boolean; children: ReactNode }) {
   return (
-    <div className={cn(open ? "contents" : "hidden", "sm:contents")}>
+    <div className={cn(open ? "contents" : "hidden", "md:contents")}>
       {children}
     </div>
   );
@@ -329,7 +329,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       className={cn(
         "sticky top-0 z-20 flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1",
         "rounded-t-[13px] border-b border-border-strong bg-surface/95 px-1.5 py-1.5 backdrop-blur",
-        "sm:px-2 sm:py-2",
+        "md:px-2 md:py-2",
       )}
     >
       <Group>
@@ -566,7 +566,7 @@ function Toolbar({ editor }: { editor: Editor }) {
           aria-expanded={showAll}
           onClick={() => setShowAll((open) => !open)}
           className={cn(
-            "inline-flex size-[34px] shrink-0 items-center justify-center rounded-full border sm:hidden",
+            "inline-flex size-[34px] shrink-0 items-center justify-center rounded-full border md:hidden",
             "transition-colors duration-150",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
             showAll
@@ -659,13 +659,13 @@ export function RichTextEditor({
         // clicking the padding below the last block should land the caret in it
         onClick={() => editor?.chain().focus().run()}
         className={cn(
-          "min-h-[260px] cursor-text px-3 py-3.5 sm:min-h-[320px] sm:px-6 sm:py-5 lg:px-8 lg:py-6",
+          "min-h-[260px] cursor-text px-3 py-3.5 md:min-h-[320px] md:px-6 md:py-5 lg:px-8 lg:py-6",
           // `.note-prose` caps itself at 72ch for the read-only viewer; while
           // editing the box is the measure, so the body fills the width it was
           // given — tables and code blocks are the ones that need it
           "[&_.note-prose]:max-w-none",
           // the shared prose size is tuned for the viewer; ease it down on phones
-          "[&_.note-prose]:text-base sm:[&_.note-prose]:text-base",
+          "[&_.note-prose]:text-base md:[&_.note-prose]:text-base",
         )}
       />
     </div>

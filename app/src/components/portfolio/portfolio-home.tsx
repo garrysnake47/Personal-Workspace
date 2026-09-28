@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowDown, ArrowUpRight, BookOpen, Lightbulb, ListTodo, NotebookPen } from "lucide-react";
 
-import { PortfolioThemeToggle } from "@/components/portfolio/portfolio-theme-toggle";
 import { PortfolioNav } from "@/components/portfolio/portfolio-nav";
 import { PortfolioScrollController } from "@/components/portfolio/portfolio-scroll-controller";
 import { PortfolioReveal } from "@/components/portfolio/portfolio-reveal";
@@ -63,9 +62,8 @@ export async function PortfolioHome() {
           <Brand />
           <PortfolioNav />
           <div className="pf-header-actions">
-            <PortfolioThemeToggle />
-            <Link href={user ? "/dashboard" : "/login"} className="pf-button pf-button-outline">
-              {user ? "Open dashboard" : "Sign in"} <ArrowUpRight />
+            <Link href={user ? "/tracker" : "/login"} className="pf-button pf-button-outline">
+              {user ? "Open workspace" : "Sign in"} <ArrowUpRight />
             </Link>
           </div>
         </header>

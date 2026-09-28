@@ -36,7 +36,7 @@ export const TICKET_STATUS_ORDER: WorkflowStatus[] = [...WORKFLOW_STATUS_ORDER];
  * five stages never read as the same colour.
  */
 const BADGE_CLASS: Record<WorkflowStatus, string> = {
-  InProgress: "bg-primary text-primary-fg",
+  InProgress: "bg-status-progress text-primary-fg",
   SentToQA: "bg-status-testing text-primary-fg",
   ReadyForProduction: "bg-status-waiting text-primary-fg",
   Released: "bg-sidebar text-sidebar-fg",
@@ -45,7 +45,7 @@ const BADGE_CLASS: Record<WorkflowStatus, string> = {
 
 /** The bare accent token — dots, a card's 3px left rule, timeline markers. */
 export const TICKET_STATUS_DOT: Record<WorkflowStatus, string> = {
-  InProgress: "bg-primary",
+  InProgress: "bg-status-progress",
   SentToQA: "bg-status-testing",
   ReadyForProduction: "bg-status-waiting",
   Released: "bg-sidebar",
@@ -54,7 +54,7 @@ export const TICKET_STATUS_DOT: Record<WorkflowStatus, string> = {
 
 /** Same accents as a border colour, for the 3px left rule on a ticket card. */
 export const TICKET_STATUS_RULE: Record<WorkflowStatus, string> = {
-  InProgress: "border-l-primary",
+  InProgress: "border-l-status-progress",
   SentToQA: "border-l-status-testing",
   ReadyForProduction: "border-l-status-waiting",
   Released: "border-l-sidebar",
@@ -69,7 +69,7 @@ export function TicketStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold whitespace-nowrap before:size-1.5 before:rounded-full before:bg-current before:opacity-80 before:content-['']",
+        "inline-flex h-6 items-center justify-center gap-1.5 rounded-full px-3 text-center text-xs leading-none font-semibold whitespace-nowrap before:size-1.5 before:shrink-0 before:rounded-full before:bg-current before:opacity-80 before:content-['']",
         BADGE_CLASS[status],
         className,
       )}

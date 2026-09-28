@@ -10,6 +10,7 @@ import {
   createFollowUpSchema,
   deleteFollowUpSchema,
   rescheduleFollowUpSchema,
+  setFollowUpPinnedSchema,
   setFollowUpStatusSchema,
 } from "@/lib/validation";
 
@@ -40,6 +41,17 @@ export async function addFollowUpUpdate(input: unknown) {
   const followUp = await followUps.addFollowUpUpdate(userId, followUpId, rest);
   if (!followUp) return notFound("Follow-up not found");
 
+  revalidatePath("/tracker");
+  return ok(followUp);
+}
+
+/** Mark / unmark as important. Input: { followUpId, pinned } */
+export async function setFollowUpPinned(input: unknown) {
+  const userId = await requireUserId();
+  const parsed = parseOrFail(setFollowUpPinnedSchema, input);
+  if (!parsed.ok) return parsed;
+  const followUp = await followUps.setFollowUpPinned(userId, parsed.data.followUpId, parsed.data.pinned);
+  if (!followUp) return notFound("Entry not found");
   revalidatePath("/tracker");
   return ok(followUp);
 }

@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { PortfolioThemeToggle } from "@/components/portfolio/portfolio-theme-toggle";
 
 const scenes = {
   login: {
@@ -35,7 +34,6 @@ export function AuthShell({
     <div className={`auth-shell auth-shell-${variant}`}>
       <header className="auth-header">
         <Link href="/" className="auth-brand" aria-label="WorkNest home">WorkNest</Link>
-        <PortfolioThemeToggle />
       </header>
 
       <main id="main-content" className="auth-layout">

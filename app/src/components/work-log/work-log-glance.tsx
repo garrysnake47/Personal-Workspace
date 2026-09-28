@@ -8,36 +8,15 @@ import { MarkdownContent } from "@/components/work-log/markdown-editor";
 import type { EditorTicket } from "@/components/work-log/types";
 
 /**
- * Detail-page rail: each ticket's current status, then its full history
+ * Detail-page card: each ticket's full history
  * (newest first, status snapshotted at that time). Entries from this log are tagged.
  */
 export function WorkLogGlance({ workLogId, tickets }: { workLogId: string; tickets: EditorTicket[] }) {
   return (
-    <aside className="motion-page-enter flex flex-col gap-6 border-border lg:sticky lg:top-28 lg:max-h-[calc(100dvh-8rem)] lg:border-l lg:pl-8" aria-label="Ticket status and history">
-      <section aria-labelledby="current-status-heading">
-        <h2 id="current-status-heading" className="text-xs font-semibold uppercase tracking-[0.08em] text-accent-text">Current ticket status</h2>
-        {tickets.length === 0 ? (
-          <p className="mt-3 text-sm text-text-muted">No tickets in this log yet.</p>
-        ) : (
-          <ul className="mt-3 flex flex-col divide-y divide-border">
-            {tickets.map((ticket) => (
-              <li key={ticket.id} className="flex flex-col gap-2 py-3 first:pt-1 last:pb-0">
-                <div className="flex items-center justify-between gap-3">
-                  <TicketId>{ticket.ticketKey}</TicketId>
-                  <TicketStatusBadge status={ticket.status} />
-                </div>
-                <p className="text-sm font-medium text-text">{ticket.title}</p>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="flex min-h-0 flex-col border-t border-border pt-6" aria-labelledby="ticket-history-heading">
-        <h2 id="ticket-history-heading" className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-accent-text"><History className="size-3.5" aria-hidden="true" />Ticket history</h2>
-        {/* Scrolls on its own so a long history never stretches the page:
-            capped at ~28rem on small screens, fills the pinned rail on lg. */}
-        <div tabIndex={0} aria-label="Ticket history entries" className="wl-scroll -ml-3 mt-1 max-h-[28rem] min-h-0 overflow-y-auto pb-2 pl-3 pr-3 lg:max-h-none lg:flex-1">
+    <section className="wl-card overflow-hidden" aria-labelledby="ticket-history-heading">
+        <h2 id="ticket-history-heading" className="flex items-center gap-2 border-b border-border px-4 py-4 text-lg font-semibold tracking-[-0.015em] text-text md:px-5"><History className="size-4 text-accent-text" aria-hidden="true" />Ticket history</h2>
+        {/* Scrolls on its own so a long history never stretches the page. */}
+        <div tabIndex={0} aria-label="Ticket history entries" className="wl-scroll max-h-[28rem] overflow-y-auto px-4 pb-4 md:px-5">
         {tickets.length === 0 ? (
           <p className="mt-3 text-sm text-text-muted">History appears once a ticket is added.</p>
         ) : tickets.map((ticket) => (
@@ -66,7 +45,6 @@ export function WorkLogGlance({ workLogId, tickets }: { workLogId: string; ticke
           </div>
         ))}
         </div>
-      </section>
-    </aside>
+    </section>
   );
 }

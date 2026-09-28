@@ -2,26 +2,22 @@
 
 import { Toaster as SonnerToaster } from "sonner";
 
-import { useTheme } from "@/components/theme/theme-provider";
-
 /**
  * Toasts (sonner) — design.md §10: bottom-right, `shadow-md`, `rounded-lg`,
  * **max 2 stacked**. Styled from tokens via `classNames` rather than sonner's
- * own CSS variables so light/dark come straight from `.dark`.
+ * own CSS variables. The site is light-only (no dark mode).
  *
  * Not for autosave — design.md §10 explicitly bans a toast there; the work-log
  * editor uses a text indicator instead.
  */
 export function Toaster() {
-  const { resolved } = useTheme();
-
   return (
     <SonnerToaster
       position="bottom-right"
       visibleToasts={2}
       gap={12}
       offset={16}
-      theme={resolved}
+      theme="light"
       toastOptions={{
         unstyled: true,
         classNames: {

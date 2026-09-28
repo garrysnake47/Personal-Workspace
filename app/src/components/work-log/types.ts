@@ -1,3 +1,4 @@
+import type { DayType } from "@/components/work-log/day-type";
 import type { WorkflowStatus } from "@/lib/workflow-status";
 
 /**
@@ -36,6 +37,8 @@ export type EditorTicket = {
   /** Ticket.ticketId — the human key, e.g. "ASU-1234". */
   ticketKey: string;
   title: string;
+  /** Project / site the ticket belongs to. */
+  projectName: string | null;
   /** Current status of the ticket. */
   status: WorkflowStatus;
   updatedAt: Date;
@@ -45,15 +48,47 @@ export type EditorTicket = {
   history: HistoryEntry[] | null;
 };
 
+export type EditorAttachment = {
+  id: string;
+  kind: "File" | "Link";
+  name: string;
+  url: string | null;
+  mimeType: string | null;
+  size: number | null;
+  createdAt: Date;
+};
+
 export type EditorWorkLog = {
   id: string;
   title: string;
-  projectName: string | null;
+  dayType: DayType;
+  /** Learning / upskilling notes (Markdown). */
+  learningNotes: string;
+  attachments: EditorAttachment[];
   date: Date;
   updatedAt: Date;
   meetings: EditorMeeting[];
   tickets: EditorTicket[];
 };
+
+/**
+ * One history, newest first: work-log updates plus updates written directly on
+ * the Tickets page (those have no work log).
+ */
+export function toMergedHistory(
+  updates: Parameters<typeof toHistory>[0],
+  historyEntries: Array<{ id: string; body: string; status: WorkflowStatus; createdAt: Date | string }> = [],
+): HistoryEntry[] {
+  const direct: HistoryEntry[] = historyEntries.map((entry) => ({
+    id: `direct-${entry.id}`,
+    description: entry.body,
+    status: entry.status,
+    createdAt: new Date(entry.createdAt),
+    updatedAt: new Date(entry.createdAt),
+    workLog: null,
+  }));
+  return [...toHistory(updates), ...direct].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
 
 /** Shape returned by `findTicket` / `upsertTicketForWorkLog`, flattened. */
 export function toHistory(

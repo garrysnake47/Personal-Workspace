@@ -1,44 +1,111 @@
-# Project instructions (shared by Claude Code and Codex)
+# AGENTS.md — how to work on WorkNest
 
-## Shared memory — read this before anything else
-`memory/` is the shared brain for both Claude and Codex. Read it at the start of every session:
+Instructions for any coding agent (Claude Code, Codex, …) working in this repo.
+`CLAUDE.md` imports this file.
 
-- `memory/project.md`   — what we're building, stack, goals
-- `memory/map.md`       — codebase map; read this INSTEAD of re-scanning the repo
-- `memory/design.md`    — colors, typography, spacing tokens
-- `memory/decisions.md` — decisions already made, and why
-- `memory/worklog.md`   — what changed recently
+## 1. Read first (every session)
 
-Update memory when you finish work. Details in `agents/_shared.md`.
+| File | Answers |
+|---|---|
+| `PRD.md` | What we're building; which features are live, hidden, coming soon or retired |
+| `Architecture.md` | How it's built: stack, routes, layering, data model, invariants, scripts |
+| `Design-System.md` | How it looks: palettes, tokens, type, components, rules |
+| `Memory.md` | Decisions already made (and why), gotchas, recent changes |
+| `skills.md` | Step-by-step recipes for recurring tasks in this codebase |
 
-## Agent team
-Role definitions live in `agents/` and are used by both tools:
+Use `Architecture.md` instead of re-scanning the repo. If it turns out to be wrong,
+fix it as part of your task.
 
-| Role | File | Owns |
-|---|---|---|
-| Lead | `agents/lead.md` | Planning, splitting work, final call |
-| UI Designer | `agents/ui-designer.md` | Colors, typography, spacing, visual consistency |
-| Frontend Dev | `agents/frontend-dev.md` | Components, pages, routing, client state |
-| Backend Dev | `agents/backend-dev.md` | API, data models, auth, validation |
-| Sanity Checker | `agents/sanity-checker.md` | Responsive, a11y, correctness — last pass |
+## 2. Keeping the docs current (required)
 
-**Claude Code:** these are real subagents in `.claude/agents/`. Invoke by name.
-**Codex:** these are slash commands — `/lead`, `/ui-designer`, `/frontend-dev`, `/backend-dev`, `/sanity-checker`.
+These six files are the project's memory. **Any change that alters what they say must
+update them in the same piece of work**, before you report the task as done.
 
-## House rules
-- Vibe coding: working code fast, readable, not over-engineered.
-- No test files, no test suites. The Sanity Checker verifies the real rendered thing.
-- Frontend uses design tokens only — no hardcoded colors, font sizes, or spacing.
-- Stay in your lane; hand off rather than reaching into another role's area.
+| If you… | Update |
+|---|---|
+| Add, remove, hide, retire or materially change a user-facing feature or route | `PRD.md` §4 inventory + the feature's §5 section; `Architecture.md` §3 routes |
+| Add/move/delete a module, action, lib file, route handler or script | `Architecture.md` (§2 layout, §4 modules, §8 scripts) |
+| Change the Prisma schema or add a migration | `Architecture.md` §5 (and §6 if an invariant changes); `PRD.md` if behaviour changes |
+| Change tokens, fonts, breakpoints, component APIs or visual rules | `Design-System.md` (tables must match the CSS) |
+| Make a choice someone could later second-guess, reverse an earlier decision, or discover a gotcha | `Memory.md` → Decisions (newest first) / Gotchas |
+| Finish any task | `Memory.md` → Changelog: one line, `YYYY-MM-DD — what changed — key files` |
+| Establish a new repeatable procedure, or change an existing one | `skills.md` |
+| Change how agents should work | `AGENTS.md` |
 
-## Installed skill: UI/UX Pro Max
-`.claude/skills/` (Codex: `.codex/skills/`, same files via symlink) holds the **ui-ux-pro-max** skill bundle — 79 UI styles, 192 color palettes, 74 font pairings, 119 UX guidelines, 25 chart types, 22 stacks.
+Also bump the **"Last synced"** date at the top of each file you touch. Keep edits
+surgical — update the affected rows/sections, don't rewrite whole files. Use absolute
+dates (e.g. 2026-09-29), never "yesterday".
 
-Skills: `ui-ux-pro-max`, `design`, `design-system`, `ui-styling`, `brand`, `banner-design`, `slides`.
+## 3. Commands
 
-**Use it for every visual decision.** Don't invent palettes or font pairings from scratch — query the skill's data first, then record the chosen result in `memory/design.md`.
+Run from the repo root unless noted.
 
-Its search scripts need Python 3 (present: 3.14). The scripts are local-only — no network calls, no installs.
+```bash
+npm run dev          # idempotent setup (env, deps, Docker Postgres :5434, migrations) + Next dev on :3000
+npm run setup        # the same setup without starting the server
+npm run typecheck    # tsc --noEmit for app/
+npm run lint         # eslint for app/
+npm run build        # next build --webpack
+npm run db:migrate   # prisma migrate dev (creates + applies a migration)
+npm run db:studio    # browse the DB
+```
 
-**Claude:** the skills load automatically.
-**Codex:** read `.codex/skills/ui-ux-pro-max/SKILL.md` and run its scripts directly.
+App-only scripts: `npm --prefix app run <script>` — see `Architecture.md` §8.
+
+## 4. House rules
+
+**Product**
+- **User isolation is absolute.** Every query and mutation is scoped by the session
+  `userId` (from `requireUser()`/`requireUserId()`), never an id sent by the client.
+- **History is append-only.** Never add an edit/delete path for `TicketWorkUpdate`
+  (except the existing same-log autosave upsert and detach) or `FollowUpUpdate`.
+- **Only what exists.** Don't present Coming Soon or deferred features as live
+  (homepage, nav, empty states). No invented users, logos or numbers.
+- Single-user product: no team/sharing language.
+
+**Code**
+- Keep the layering: client component → `actions/*` (auth → Zod → `lib/*` →
+  `revalidatePath` → `ActionResult`) → `lib/*` (`server-only`, explicit `userId`).
+- Validate every mutation server-side with a schema in `lib/validation.ts`.
+- Sprint maths only via `lib/sprint.ts`; work-log dates via the helpers in
+  `lib/worklogs.ts`.
+- Next.js 16 differs from older versions (`proxy.ts` not `middleware.ts`, async
+  `params`, etc.). Check `app/node_modules/next/dist/docs/` before using an API
+  you're unsure of.
+- Match the surrounding code: naming, comment density (comments explain *why*),
+  file structure. Small, focused changes; don't refactor what nobody asked about.
+- Working code fast, readable, not over-engineered.
+
+**UI**
+- Design tokens only — no raw hex, px font sizes or ad-hoc shadows (see
+  `Design-System.md` §10). Reuse `components/ui/*` primitives.
+- Light only. Responsive at 375 / 768 / 1024 / 1440 with no horizontal page scroll;
+  the nav stays on one line; no `sm:` classes (that breakpoint doesn't exist).
+- For visual work, follow `Design-System.md` first; the project design skills in
+  `.claude/skills/` (see `skills.md` §13) are the deeper reference.
+- Visible labels, keyboard access, visible focus, reduced-motion support.
+
+## 5. Verifying work
+
+There is no automated test suite by design. Verify the real thing:
+
+1. `npm run typecheck` and `npm run lint` pass.
+2. For schema changes: migration created with `db:migrate`, client regenerated.
+3. For UI changes: run the app (`npm run dev`, or the `run` skill / browser preview)
+   and check the affected screens at 360, 768, 1024 and 1440 — including empty,
+   loading and error states.
+4. For data-rule changes: exercise the flow and confirm in `db:studio` (e.g. a second
+   day's ticket update creates a new row; autosave doesn't duplicate).
+
+Report honestly: if something wasn't verified, say so.
+
+## 6. Safety
+
+- **Ask before running** anything destructive: `db:reset`, `db:hosted -- --seed`
+  (wipes all users on the hosted DB), `db:seed:sprint` / `db:seed:tracker` /
+  `db:seed` (replace an account's data), or any deploy.
+- Never commit `.env`, `.env.vercel` or real credentials — the GitHub repo is public.
+  Seed passwords come from `SEED_PASSWORD`.
+- Never edit `app/src/generated/prisma/` by hand; never rewrite an applied migration —
+  add a new one.
+- Commit or push only when asked. Work on a branch, not `main`.

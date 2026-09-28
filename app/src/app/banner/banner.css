@@ -87,10 +87,6 @@
 .pf-footer nav a::after { position: absolute; right: 0; bottom: 5px; left: 0; height: 1px; content: ""; background: currentColor; transform: scaleX(0); transform-origin: left; transition: transform 180ms ease; }
 .pf-footer nav a:hover::after, .pf-footer nav a:focus-visible::after { transform: scaleX(1); }
 .pf-header-actions { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
-.pf-theme-toggle { display: inline-grid; width: 44px; height: 44px; place-items: center; cursor: pointer; border: 1px solid var(--pf-line-strong); border-radius: 999px; background: var(--pf-surface); color: var(--pf-text); transition: background-color 160ms ease, border-color 160ms ease; }
-.pf-theme-toggle:hover { background: var(--pf-surface-2); }
-.pf-theme-toggle-icon { display: grid; place-items: center; }
-.pf-theme-toggle svg { width: 17px; height: 17px; }
 
 .pf-button { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: 12px; padding: 0 25px; cursor: pointer; border: 1px solid transparent; border-radius: 999px; font-size: 0.875rem; font-weight: 700; transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease, transform 180ms ease; }
 .pf-button:hover { transform: translateY(-1px); }
@@ -227,7 +223,6 @@
 
 @media (max-width: 430px) {
   .pf-brand { font-size: 1.4rem; }
-  .pf-theme-toggle { width: 42px; height: 42px; }
   .pf-hero-copy h1 { font-size: 2.75rem; }
   .pf-actions { align-items: flex-start; flex-direction: column; }
   .pf-inside-link { grid-template-columns: 44px minmax(0, 1fr) 20px; gap: 14px; padding-block: 18px; }

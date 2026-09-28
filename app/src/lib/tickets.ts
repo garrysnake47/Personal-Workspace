@@ -108,9 +108,16 @@ export async function findTicketByKeyWithHistory(
         take: historyLimit,
         include: { workLog: { select: { id: true, title: true, date: true } } },
       },
+      // Updates written directly on the Tickets page — shown in the same history.
+      historyEntries: { orderBy: { createdAt: "desc" }, take: historyLimit },
     },
   });
-  return ticket ? normalizeTicketWithUpdates(ticket) : null;
+  if (!ticket) return null;
+  const { historyEntries, ...rest } = ticket;
+  return {
+    ...normalizeTicketWithUpdates(rest),
+    historyEntries: historyEntries.map((entry) => ({ ...entry, status: normalizeTicketStatus(entry.status) })),
+  };
 }
 
 /** Full ticket + complete timeline. Null when it isn't this user's. */
@@ -143,6 +150,7 @@ export async function listTickets(
           OR: [
             { ticketId: { contains: search, mode: "insensitive" as const } },
             { title: { contains: search, mode: "insensitive" as const } },
+            { projectName: { contains: search, mode: "insensitive" as const } },
           ],
         }
       : {}),
@@ -186,6 +194,8 @@ export type UpsertTicketInput = {
   ticketKey: string;
   /** Used only when the ticket has to be created. */
   title?: string;
+  /** Project / site — used only when the ticket has to be created. */
+  projectName?: string | null;
   /** Initial status on create; ignored for an existing ticket. */
   status?: WorkflowStatus;
 };
@@ -244,6 +254,7 @@ export async function upsertTicketForWorkLog(
           userId,
           ticketId: ticketKey,
           title: input.title?.trim() || ticketKey,
+          projectName: input.projectName?.trim() || null,
           status: toStoredTicketStatus(input.status ?? "InProgress"),
         },
         select: { id: true, status: true },
@@ -451,12 +462,13 @@ export async function detachTicketFromWorkLog(
 export async function updateTicket(
   userId: string,
   ticketId: string,
-  data: { title?: string; status?: WorkflowStatus },
+  data: { title?: string; projectName?: string | null; status?: WorkflowStatus },
 ) {
   const result = await prisma.ticket.updateMany({
     where: { id: ticketId, userId },
     data: {
       ...(data.title !== undefined ? { title: data.title } : {}),
+      ...(data.projectName !== undefined ? { projectName: data.projectName } : {}),
       ...(data.status !== undefined
         ? { status: toStoredTicketStatus(data.status) }
         : {}),
@@ -529,6 +541,28 @@ export async function deleteTicket(userId: string, ticketId: string) {
 }
 
 /** Dashboard card: the active workflow states. */
+/**
+ * Distinct project / site names already used on this user's tickets, for the
+ * project autocomplete. Case-insensitive de-dupe keeps the first spelling.
+ */
+export async function listProjectNames(userId: string) {
+  const rows = await prisma.ticket.findMany({
+    where: { userId, projectName: { not: null } },
+    select: { projectName: true },
+    distinct: ["projectName"],
+    orderBy: { projectName: "asc" },
+  });
+  const seen = new Set<string>();
+  const names: string[] = [];
+  for (const { projectName } of rows) {
+    const name = projectName?.trim();
+    if (!name || seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    names.push(name);
+  }
+  return names;
+}
+
 export async function listActiveTickets(userId: string, take = 10) {
   const tickets = await prisma.ticket.findMany({
     where: { userId },

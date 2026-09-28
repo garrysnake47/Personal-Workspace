@@ -1,11 +1,12 @@
 import { FileText, Plus, Star } from "lucide-react";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 
 import { toggleNoteFavorite } from "@/actions/notes";
 import { cn } from "@/components/cn";
+import { isLightColor, noteAccent } from "@/lib/note-colors";
 import { NoteIcon } from "@/components/notes/NoteIcon";
 import { PageHeader } from "@/components/shell/page-header";
-import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { listNotes } from "@/lib/note-store";
 import { requireUserId } from "@/lib/session";
@@ -59,11 +60,12 @@ export default async function NotesPage() {
               style={{ "--motion-index": index } as React.CSSProperties}
               className="motion-stagger scroll-reveal-item motion-lift min-w-0"
             >
-              <article className="flex h-full min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4">
+              <article style={{ "--note": noteAccent(note.iconName, note.id) } as CSSProperties} className="flex h-full min-w-0 flex-col gap-3 rounded-xl border border-[color-mix(in_srgb,var(--note)_60%,var(--c-surface))] bg-[color-mix(in_srgb,var(--note)_4%,var(--c-surface))] p-5 transition-shadow duration-150 hover:shadow-md">
                 <div className="flex min-w-0 items-start gap-3">
                   <span
                     aria-hidden="true"
-                    className="grid size-9 shrink-0 place-items-center rounded-md bg-surface text-accent-text"
+                    style={{ color: isLightColor(noteAccent(note.iconName, note.id)) ? "color-mix(in srgb, var(--note) 70%, #1f2937)" : "var(--note)" }}
+                    className="grid size-10 shrink-0 place-items-center rounded-lg border border-[color-mix(in_srgb,var(--note)_45%,var(--c-surface))] bg-surface shadow-sm"
                   >
                     <NoteIcon
                       icon={
@@ -117,16 +119,11 @@ export default async function NotesPage() {
 
                 {note.sectionTitles.length ? (
                   <div className="flex flex-wrap gap-1.5">
-                    {note.sectionTitles.slice(0, 4).map((title) => (
-                      <Badge key={title} tone="neutral">
+                    {[...note.sectionTitles.slice(0, 4), ...(note.sectionTitles.length > 4 ? [`+${note.sectionTitles.length - 4}`] : [])].map((title) => (
+                      <span key={title} className="inline-flex h-6 items-center rounded-full bg-surface px-2.5 text-xs font-medium text-text-muted">
                         {title}
-                      </Badge>
+                      </span>
                     ))}
-                    {note.sectionTitles.length > 4 ? (
-                      <Badge tone="neutral">
-                        +{note.sectionTitles.length - 4}
-                      </Badge>
-                    ) : null}
                   </div>
                 ) : null}
 
@@ -141,3 +138,4 @@ export default async function NotesPage() {
     </div>
   );
 }
+

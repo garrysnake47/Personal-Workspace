@@ -1,11 +1,9 @@
 "use client";
 
 import { Reorder, useDragControls } from "framer-motion";
-import { CornerUpRight, Copy, GripVertical, Trash2 } from "lucide-react";
+import { ChevronDown, CornerUpRight, Copy, FileText, GripVertical, Trash2 } from "lucide-react";
 import { useId } from "react";
 
-import { Field } from "@/components/notes/note-field";
-import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/notes/RichTextEditor";
 import { cn } from "@/components/cn";
 
@@ -31,6 +29,8 @@ export function PageEditor({
   sectionIndex,
   removable,
   sections,
+  collapsed,
+  onToggleCollapse,
   titleErrors,
   contentErrors,
   onChange,
@@ -45,6 +45,9 @@ export function PageEditor({
   removable: boolean;
   /** every section in the note, for the move picker */
   sections: SectionOption[];
+  /** editor folded away — only the header shows */
+  collapsed: boolean;
+  onToggleCollapse: () => void;
   titleErrors?: string[];
   contentErrors?: string[];
   onChange: (next: PageDraft) => void;
@@ -65,20 +68,17 @@ export function PageEditor({
       value={page}
       dragListener={false}
       dragControls={controls}
-      className={cn(
-        "min-w-0 bg-bg",
-        // pages are separated by a hairline, not boxed in cards
-        "[&:not(:first-child)]:mt-5 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-border [&:not(:first-child)]:pt-5",
-        "sm:[&:not(:first-child)]:mt-6 sm:[&:not(:first-child)]:pt-6",
-      )}
+      id={`note-page-${page.id}`}
+      className="min-w-0 scroll-mt-48 overflow-hidden rounded-xl border border-border bg-surface shadow-xs"
     >
-      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1.5">
+      {/* Page header: lighter than the section's, title inline. */}
+      <div className={cn("flex min-w-0 flex-wrap items-center gap-2 px-2.5 py-2 md:flex-nowrap md:px-3", !collapsed && "border-b border-border")}>
         <button
           type="button"
           aria-label={`Reorder ${label}`}
           onPointerDown={(event) => controls.start(event)}
           className={cn(
-            "inline-flex size-[32px] shrink-0 cursor-grab touch-none items-center justify-center rounded-full sm:size-[26px]",
+            "inline-flex size-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-md",
             "text-text-subtle transition-colors hover:bg-surface-2 hover:text-text-muted active:cursor-grabbing",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
           )}
@@ -86,11 +86,25 @@ export function PageEditor({
           <GripVertical aria-hidden="true" className="size-[15px]" />
         </button>
 
-        <span className="text-2xs font-medium uppercase tracking-[0.08em] text-text-subtle">
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-primary/40 bg-primary-subtle px-2 py-0.5 text-2xs font-bold uppercase tracking-[0.08em] text-accent-text">
+          <FileText aria-hidden="true" className="size-3" />
           {label}
         </span>
 
-        <div className="ml-auto flex items-center gap-1">
+        <div className="order-last w-full min-w-0 md:order-none md:w-auto md:flex-1">
+          <label htmlFor={titleId} className="sr-only">Page title</label>
+          <input
+            id={titleId}
+            value={page.title}
+            onChange={(event) => onChange({ ...page, title: event.target.value })}
+            placeholder="Page title"
+            aria-invalid={titleErrors?.length ? true : undefined}
+            className="h-10 w-full min-w-0 rounded-lg border border-border-strong bg-surface px-3 text-base font-semibold text-text outline-none transition-[border-color,box-shadow] placeholder:font-normal placeholder:text-text-subtle hover:border-primary focus:border-primary focus:shadow-[0_0_0_3px_var(--c-primary-subtle)] aria-invalid:border-danger"
+          />
+          {titleErrors?.length ? <p role="alert" className="mt-1 px-2 text-xs text-danger">{titleErrors[0]}</p> : null}
+        </div>
+
+        <ToolbarGroup className="ml-auto md:ml-0">
           {sections.length > 1 ? (
             <>
               <label htmlFor={moveId} className="sr-only">
@@ -104,6 +118,7 @@ export function PageEditor({
                 <select
                   id={moveId}
                   value={sections[sectionIndex]?.id ?? ""}
+                  title="Move to section"
                   onChange={(event) => {
                     const target = event.target.value;
                     if (target && target !== sections[sectionIndex]?.id) {
@@ -111,9 +126,8 @@ export function PageEditor({
                     }
                   }}
                   className={cn(
-                    "max-w-[110px] cursor-pointer appearance-none rounded-full border border-transparent bg-transparent sm:max-w-[160px]",
-                    "h-[32px] py-1 pl-7 pr-2 text-xs text-text-muted outline-none transition-colors sm:h-auto",
-                    "hover:border-border hover:bg-surface hover:text-text",
+                    "h-8 max-w-[150px] cursor-pointer appearance-none rounded-md bg-transparent py-1 pl-7 pr-2 text-xs font-medium text-text-muted outline-none transition-colors",
+                    "hover:bg-surface-2 hover:text-text",
                     "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
                   )}
                 >
@@ -124,10 +138,11 @@ export function PageEditor({
                   ))}
                 </select>
               </div>
+              <span className="mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
             </>
           ) : null}
 
-          <IconAction label={`Duplicate ${label}`} onClick={onDuplicate}>
+          <IconAction label={`Duplicate ${label}`} onClick={onDuplicate} tone="copy">
             <Copy aria-hidden="true" className="size-[14px]" />
           </IconAction>
           <IconAction
@@ -138,26 +153,16 @@ export function PageEditor({
           >
             <Trash2 aria-hidden="true" className="size-[14px]" />
           </IconAction>
-        </div>
+          <span className="mx-0.5 h-5 w-px bg-border" aria-hidden="true" />
+          <IconAction label={collapsed ? `Expand ${label}` : `Collapse ${label}`} onClick={onToggleCollapse} tone="fold">
+            <ChevronDown aria-hidden="true" className={cn("size-4 transition-transform duration-200", !collapsed && "rotate-180")} />
+          </IconAction>
+        </ToolbarGroup>
       </div>
 
-      {/* Title, then body. The body takes the whole column; the title is a
-          short string and keeps a readable measure on very wide screens. */}
-      <div className="mt-3 min-w-0 lg:max-w-[640px]">
-        <Field label="Page title" htmlFor={titleId} errors={titleErrors}>
-          <Input
-            id={titleId}
-            value={page.title}
-            onChange={(event) => onChange({ ...page, title: event.target.value })}
-            placeholder="Variables and data types"
-          />
-        </Field>
-      </div>
-
-      <div className="mt-4 min-w-0">
-        <p className="mb-2 text-sm font-medium leading-[1.3] text-text">
-          Page content
-        </p>
+      {/* The body takes the whole card; folded pages keep just their header. */}
+      <div className={cn("min-w-0 p-2 md:p-3", collapsed && "hidden")}>
+        <p className="sr-only">Page content</p>
         <RichTextEditor
           value={page.content}
           onChange={(content) => onChange({ ...page, content })}
@@ -172,18 +177,30 @@ export function PageEditor({
   );
 }
 
+/** Groups a header's actions into one compact bordered toolbar. */
+export function ToolbarGroup({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <div className={cn("flex shrink-0 items-center gap-1 rounded-lg border border-border bg-surface p-1 shadow-xs", className)}>
+      {children}
+    </div>
+  );
+}
+
 /** A small round icon button — shared by the page and section headers. */
 export function IconAction({
   label,
   onClick,
   disabled,
   danger,
+  tone = danger ? "danger" : "neutral",
   children,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
   danger?: boolean;
+  /** Tinted by what the button does: copy = teal, delete = red, fold = navy. */
+  tone?: "neutral" | "copy" | "danger" | "fold";
   children: React.ReactNode;
 }) {
   return (
@@ -194,10 +211,11 @@ export function IconAction({
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "inline-flex size-[34px] shrink-0 items-center justify-center rounded-full border border-transparent sm:size-[28px]",
-        "text-text-subtle transition-colors",
-        "hover:border-border hover:bg-surface",
-        danger ? "hover:text-danger" : "hover:text-text",
+        "inline-flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+        tone === "copy" && "bg-primary-subtle text-accent-text hover:bg-primary hover:text-primary-fg",
+        tone === "danger" && "bg-danger-subtle text-danger hover:bg-danger hover:text-danger-fg",
+        tone === "fold" && "bg-card-navy text-accent-text hover:bg-sidebar hover:text-sidebar-fg",
+        tone === "neutral" && "text-text-muted hover:bg-surface-2 hover:text-text",
         "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         "disabled:pointer-events-none disabled:opacity-35",
       )}

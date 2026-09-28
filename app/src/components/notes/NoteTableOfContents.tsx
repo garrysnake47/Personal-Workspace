@@ -186,7 +186,7 @@ export function NoteTableOfContents({
         note. The height budget leaves room for `main`'s own top/bottom
         padding plus the label — tune here, not on the outer sticky wrapper.
       */}
-      <div className="hidden rounded-xl bg-surface-2 p-4 lg:block">
+      <div className="hidden rounded-xl border border-border-strong bg-surface-2 p-4 lg:block">
         <p className="px-1 text-xs font-semibold uppercase tracking-[0.08em] text-text-subtle">
           On this page
         </p>

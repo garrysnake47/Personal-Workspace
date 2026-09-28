@@ -2,44 +2,48 @@ import type { Metadata, Viewport } from "next";
 import {
   Archivo,
   Bricolage_Grotesque,
-  JetBrains_Mono,
+  Geist,
+  Geist_Mono,
   Martian_Mono,
   Plus_Jakarta_Sans,
 } from "next/font/google";
-import Script from "next/script";
 import localFont from "next/font/local";
 
 import { Providers } from "@/components/providers";
-import { THEME_INIT_SCRIPT } from "@/components/theme/theme";
 
 import "./globals.css";
 
 /**
- * Type — design.md §6. Plus Jakarta Sans is the UI face: a geometric sans with
- * a tall x-height, so 13-14px labels stay legible at the density this app runs
- * at, and `tabular-nums` keeps columns of dates and counts aligned.
+ * Type — design.md §6. Geist is the app UI face (2026-09-28 refresh, per the
+ * taste + redesign skills): a crisp neo-grotesk with real Medium/SemiBold
+ * steps, so dense 13-14px labels keep a clear hierarchy. Geist Mono carries
+ * ticket IDs, timestamps and code, and shares Geist's metrics.
  *
- * Self-hosted by `next/font` (no Google request at runtime, no layout shift),
- * variable weights so 400/500/600/700 cost one file.
+ * Plus Jakarta Sans stays loaded for the PUBLIC pages only (homepage, banner,
+ * auth), which reference `--font-jakarta` directly. Its italic is used for one
+ * span in the marketing hero, so the real italic file is loaded rather than a
+ * synthesised oblique.
  *
- * The italic face is loaded for ONE span — the marketing hero's second headline
- * line. Without it the browser synthesises an oblique by shearing the roman,
- * which at 72px is plainly a fake. It is a second variable file, so it costs
- * one request on the public page and nothing in the app UI, which never
- * sets `italic`.
+ * Self-hosted by `next/font` (no Google request at runtime, no layout shift).
  */
+const geist = Geist({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist",
+});
+
+/** Ticket IDs, timestamps, saved commands. Ligatures are switched off in CSS. */
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-mono",
+});
+
 const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   style: ["normal", "italic"],
   display: "swap",
   variable: "--font-jakarta",
-});
-
-/** Ticket IDs, timestamps, saved commands. Ligatures are switched off in CSS. */
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-jetbrains-mono",
 });
 
 /* ---------------------------------------------------------------------------
@@ -91,35 +95,17 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // Matches the light/dark surfaces so the mobile browser chrome doesn't clash.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0b0d" },
-  ],
+  // Light-only site: the mobile browser chrome always matches the white page.
+  themeColor: "#ffffff",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      // The pre-hydration script below mutates className / style on <html>,
-      // which React would otherwise flag as a hydration mismatch.
-      suppressHydrationWarning
-      className={`h-full ${jakarta.variable} ${jetbrainsMono.variable} ${bricolage.variable} ${archivo.variable} ${martianMono.variable} ${cormorant.variable}`}
+      className={`h-full ${geist.variable} ${geistMono.variable} ${jakarta.variable} ${bricolage.variable} ${archivo.variable} ${martianMono.variable} ${cormorant.variable}`}
     >
-      <head>
-        {/*
-          Runs before first paint: applies the stored theme (or the system
-          preference when there is no stored choice) so there is never a flash
-          of the wrong theme. Must stay inline and synchronous — a deferred or
-          external script is already too late.
-        */}
-        <Script
-          id="theme-init"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
-        />
-      </head>
       <body className="flex min-h-full flex-col bg-bg text-text">
         <Providers>{children}</Providers>
       </body>

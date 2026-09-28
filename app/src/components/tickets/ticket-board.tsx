@@ -1,11 +1,11 @@
 "use client";
 
 import { format } from "date-fns";
-import { ArrowRight, CalendarDays, FileText, History, Loader2, Search, ShieldCheck, Ticket as TicketIcon, Trash2 } from "lucide-react";
+import { ArrowRight, Building2, CalendarDays, History, Loader2, Search, ShieldCheck, Ticket as TicketIcon, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
-import { appendTicketHistoryEntry, deleteTicketHistoryEntry, getTicket, updateTicket } from "@/actions/tickets";
+import { appendTicketHistoryEntry, deleteTicketHistoryEntry, getTicket } from "@/actions/tickets";
 import { cn } from "@/components/cn";
 import { MarkdownContent, MarkdownEditor } from "@/components/work-log/markdown-editor";
 import { TicketId } from "@/components/ui/badge";
@@ -15,7 +15,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { TICKET_STATUS_LABELS, TICKET_STATUS_ORDER, TicketStatusBadge } from "@/components/ui/ticket-status-badge";
+import { TICKET_STATUS_DOT, TICKET_STATUS_LABELS, TICKET_STATUS_ORDER, TicketStatusBadge } from "@/components/ui/ticket-status-badge";
 import { toast } from "@/components/ui/toast";
 import type { WorkflowStatus } from "@/lib/workflow-status";
 
@@ -23,8 +23,10 @@ export type TicketBoardItem = {
   id: string;
   ticketId: string;
   title: string;
+  projectName: string | null;
   status: WorkflowStatus;
   updatedAt: string;
+  createdAt: string;
   workLogCount: number;
   latestUpdate: {
     description: string;
@@ -46,32 +48,32 @@ type TicketDetail = {
 
 type StatusFilter = "All" | WorkflowStatus;
 
-export function TicketBoard({ initialTickets, loadError }: { initialTickets: TicketBoardItem[]; loadError?: string }) {
+export function TicketBoard({ initialTickets, loadError, daysOff = [] }: { initialTickets: TicketBoardItem[]; loadError?: string; daysOff?: string[] }) {
   const [tickets, setTickets] = useState(initialTickets);
   const [selectedId, setSelectedId] = useState("");
   const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<StatusFilter>("All");
+  const [status, setStatus] = useState<StatusFilter>("InProgress");
 
   const visibleTickets = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase();
     return tickets.filter((ticket) => {
       const matchesStatus = status === "All" || ticket.status === status;
-      const matchesQuery = !needle || ticket.ticketId.toLocaleLowerCase().includes(needle) || ticket.title.toLocaleLowerCase().includes(needle);
+      const matchesQuery = !needle || ticket.ticketId.toLocaleLowerCase().includes(needle) || ticket.title.toLocaleLowerCase().includes(needle) || (ticket.projectName ?? "").toLocaleLowerCase().includes(needle);
       return matchesStatus && matchesQuery;
     });
   }, [query, status, tickets]);
 
   const selectedTicket = visibleTickets.find((ticket) => ticket.id === selectedId) ?? null;
 
-  function replaceTicket(ticketId: string, patch: Partial<Pick<TicketBoardItem, "title" | "status" | "updatedAt">>) {
+  function replaceTicket(ticketId: string, patch: Partial<Pick<TicketBoardItem, "title" | "projectName" | "status" | "updatedAt">>) {
     setTickets((current) => current.map((ticket) => ticket.id === ticketId ? { ...ticket, ...patch } : ticket));
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-[76rem] min-w-0 flex-col gap-6">
+    <div className="tickets-board flex w-full min-w-0 flex-col gap-6">
       <header className="motion-page-enter flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
-          <h1 className="text-4xl font-semibold tracking-[-0.04em] text-text lg:text-5xl">Tickets</h1>
+          <h1 className="text-3xl font-semibold tracking-[-0.03em] text-text lg:text-4xl">Tickets</h1>
           <p className="mt-2 max-w-[62ch] text-base leading-relaxed text-text-muted">
             Keep each ticket current while preserving every update as a readable timeline.
           </p>
@@ -90,7 +92,7 @@ export function TicketBoard({ initialTickets, loadError }: { initialTickets: Tic
 
       <section aria-label="Ticket filters" className="grid gap-3 border-y border-border py-4 md:grid-cols-[minmax(0,1fr)_15rem]">
         <Field label="Search tickets" htmlFor="ticket-search">
-          <Input id="ticket-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ticket ID or title" startIcon={<Search />} />
+          <Input id="ticket-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Ticket ID, title or project" startIcon={<Search />} />
         </Field>
         <Field label="Filter by status" htmlFor="ticket-status-filter">
           <Select id="ticket-status-filter" value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)} className="h-10">
@@ -125,13 +127,13 @@ export function TicketBoard({ initialTickets, loadError }: { initialTickets: Tic
             </Field>
           </div>
 
-          <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[19rem_minmax(0,1fr)] lg:gap-6">
-            <aside aria-label="Ticket list" className="sticky top-24 hidden overflow-hidden rounded-2xl border border-border bg-card lg:block">
+          <div className="grid min-w-0 items-start gap-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[19rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch lg:gap-6">
+            <aside aria-label="Ticket list" className="hidden min-h-0 overflow-hidden rounded-2xl border border-border bg-card lg:flex lg:flex-col">
               <div className="flex items-center justify-between px-4 pb-1 pt-4">
                 <p className="text-sm font-semibold text-text">All tickets</p>
                 <span className="text-xs text-text-subtle">{visibleTickets.length} shown</span>
               </div>
-              <div className="max-h-[calc(100vh-15rem)] overflow-y-auto p-2">
+              <div className="wl-scroll min-h-0 flex-1 overflow-y-auto p-2">
                 {visibleTickets.map((ticket) => (
                   <TicketListItem key={ticket.id} ticket={ticket} selected={ticket.id === selectedTicket?.id} onSelect={() => setSelectedId(ticket.id)} />
                 ))}
@@ -139,10 +141,11 @@ export function TicketBoard({ initialTickets, loadError }: { initialTickets: Tic
             </aside>
 
             {selectedTicket ? (
-              <TicketDetailPanel key={selectedTicket.id} ticket={selectedTicket} onChange={replaceTicket} />
+              <TicketDetailPanel key={selectedTicket.id} ticket={selectedTicket} daysOff={daysOff} onChange={replaceTicket} />
             ) : (
-              <div className="hidden min-h-72 items-center justify-center rounded-2xl border border-border bg-card lg:flex">
+              <div className="hidden min-h-72 items-center justify-center rounded-2xl border border-border bg-card lg:flex lg:h-full">
                 <EmptyState
+                  className="border-0 bg-transparent shadow-none"
                   icon={TicketIcon}
                   title="Select a ticket"
                   description="Choose a ticket from the list to view its details and history."
@@ -169,30 +172,37 @@ function TicketListItem({ ticket, selected, onSelect }: { ticket: TicketBoardIte
     >
       <div className="flex w-full items-center justify-between gap-2">
         <TicketId>{ticket.ticketId}</TicketId>
-        <ArrowRight className={cn("size-4 shrink-0 text-text-subtle transition-transform duration-150", selected && "translate-x-0.5 text-accent-text")} aria-hidden="true" />
+        <TicketStatusBadge status={ticket.status} />
       </div>
       <span className="line-clamp-2 text-sm font-medium leading-5 text-text">{ticket.title}</span>
-      <div className="flex flex-wrap items-center gap-2">
-        <TicketStatusBadge status={ticket.status} />
-        <span className="text-xs text-text-subtle">{ticket.workLogCount} {ticket.workLogCount === 1 ? "log" : "logs"}</span>
+      <div className="flex w-full items-center justify-between gap-2">
+        {ticket.projectName ? (
+          <span className="inline-flex min-w-0 items-center gap-1 text-xs font-medium text-accent-text">
+            <Building2 className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{ticket.projectName}</span>
+          </span>
+        ) : <span className="text-xs text-text-subtle">No project</span>}
+        <span className="shrink-0 text-xs text-text-subtle tabular-nums">{ticket.workLogCount} {ticket.workLogCount === 1 ? "log" : "logs"}</span>
       </div>
     </button>
   );
 }
 
-function TicketDetailPanel({ ticket, onChange }: {
+function TicketDetailPanel({ ticket, daysOff, onChange }: {
   ticket: TicketBoardItem;
-  onChange: (ticketId: string, patch: Partial<Pick<TicketBoardItem, "title" | "status" | "updatedAt">>) => void;
+  /** Holiday / Leave days (YYYY-MM-DD) — not counted as working days. */
+  daysOff: string[];
+  onChange: (ticketId: string, patch: Partial<Pick<TicketBoardItem, "title" | "projectName" | "status" | "updatedAt">>) => void;
 }) {
   const [detail, setDetail] = useState<TicketDetail | null>(null);
   const [loadError, setLoadError] = useState("");
-  const [title, setTitle] = useState(ticket.title);
   const [status, setStatus] = useState(ticket.status);
   const [body, setBody] = useState("");
-  const [saving, setSaving] = useState<"title" | "status" | "body" | null>(null);
+  const [saving, setSaving] = useState<"body" | null>(null);
   const [message, setMessage] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const titleChanged = title.trim() !== ticket.title;
+  // Title and project are read-only here; only the status is a draft.
+  const statusChanged = status !== ticket.status;
 
   useEffect(() => {
     let cancelled = false;
@@ -224,56 +234,27 @@ function TicketDetailPanel({ ticket, onChange }: {
     ].sort((first, second) => new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime());
   }, [detail]);
 
-  async function saveTitle() {
-    if (!titleChanged || saving) return;
-    const nextTitle = title.trim();
-    if (!nextTitle) { setMessage("Enter a ticket title before saving."); return; }
-    setSaving("title");
-    setMessage("Saving title…");
-    const result = await updateTicket({ ticketId: ticket.id, title: nextTitle });
-    setSaving(null);
-    if (!result.ok) {
-      setMessage(result.error.message);
-      toast.error("Ticket title was not saved", { description: result.error.message });
-      return;
-    }
-    setTitle(result.data.title);
-    onChange(ticket.id, { title: result.data.title, updatedAt: result.data.updatedAt.toISOString() });
-    setMessage("Title saved.");
-  }
+  const journey = useMemo(() => (detail ? ticketJourney(ticket, detail, new Set(daysOff)) : null), [detail, ticket, daysOff]);
 
-  async function saveStatus(nextStatus: WorkflowStatus) {
-    if (nextStatus === status || saving) return;
-    const previousStatus = status;
-    setStatus(nextStatus);
-    setSaving("status");
-    setMessage("Saving status…");
-    const result = await updateTicket({ ticketId: ticket.id, status: nextStatus });
-    setSaving(null);
-    if (!result.ok) {
-      setStatus(previousStatus);
-      setMessage(result.error.message);
-      toast.error("Ticket status was not saved", { description: result.error.message });
-      return;
-    }
-    setStatus(result.data.status);
-    onChange(ticket.id, { status: result.data.status, updatedAt: result.data.updatedAt.toISOString() });
-    setMessage("Status saved.");
-  }
-
-  async function addHistoryEntry() {
+  /**
+   * The one save: writes the update (if any) with the chosen status, or — with
+   * no text — just changes the status. Adding a history entry also sets the
+   * ticket's status, so the text + status case is a single call.
+   */
+  async function saveUpdate() {
     const nextBody = body.trim();
-    if (!nextBody || saving) {
-      if (!nextBody) setMessage("Write an update before adding it to history.");
-      return;
-    }
+    if ((!nextBody && !statusChanged) || saving) return;
     setSaving("body");
-    setMessage("Adding update…");
-    const result = await appendTicketHistoryEntry({ ticketId: ticket.id, body: nextBody, status });
+    setMessage(nextBody ? "Saving update…" : "Saving status…");
+
+    // A status-only change is still recorded in the history, so every timeline
+    // (here and in work logs) shows when the status moved.
+    const entryBody = nextBody || `Status changed from ${TICKET_STATUS_LABELS[ticket.status]} to ${TICKET_STATUS_LABELS[status]}.`;
+    const result = await appendTicketHistoryEntry({ ticketId: ticket.id, body: entryBody, status });
     setSaving(null);
     if (!result.ok) {
       setMessage(result.error.message);
-      toast.error("Ticket update was not added", { description: result.error.message });
+      toast.error("Ticket update was not saved", { description: result.error.message });
       return;
     }
     const entry = result.data.entry;
@@ -284,8 +265,8 @@ function TicketDetailPanel({ ticket, onChange }: {
     setBody("");
     setStatus(result.data.ticket.status);
     onChange(ticket.id, { status: result.data.ticket.status, updatedAt: result.data.ticket.updatedAt.toISOString() });
-    setMessage("Update added to ticket history. Work logs are unchanged.");
-    toast.success("Update added to history");
+    setMessage(nextBody ? "Update saved to ticket history. Work logs are unchanged." : "Status changed and recorded in the history.");
+    toast.success(nextBody ? "Update saved" : "Status updated");
   }
 
   async function deleteHistoryEntry() {
@@ -306,12 +287,13 @@ function TicketDetailPanel({ ticket, onChange }: {
   }
 
   return (
-    <article aria-labelledby={`ticket-heading-${ticket.id}`} className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card">
+    <article aria-labelledby={`ticket-heading-${ticket.id}`} className="wl-scroll min-w-0 overflow-hidden rounded-2xl border border-border bg-card lg:h-full lg:overflow-y-auto">
       <header className="px-5 pt-5 md:px-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2"><TicketId>{ticket.ticketId}</TicketId><TicketStatusBadge status={status} /></div>
+            <div className="flex flex-wrap items-center gap-2"><TicketId>{ticket.ticketId}</TicketId><TicketStatusBadge status={ticket.status} /></div>
             <h2 id={`ticket-heading-${ticket.id}`} className="mt-2 text-2xl font-semibold tracking-tight text-text">{ticket.title}</h2>
+            {ticket.projectName ? <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-text"><Building2 className="size-4" aria-hidden="true" />{ticket.projectName}</p> : null}
           </div>
           <div className="shrink-0 text-sm text-text-subtle md:text-right">
             <p>{ticket.workLogCount} {ticket.workLogCount === 1 ? "work log" : "work logs"}</p>
@@ -320,66 +302,43 @@ function TicketDetailPanel({ ticket, onChange }: {
         </div>
       </header>
 
-      <div className="flex min-w-0 flex-col gap-7 p-5 md:p-6">
-        <section aria-labelledby={`details-heading-${ticket.id}`}>
-          <div className="mb-4 flex items-center gap-2">
-            <FileText className="size-4 text-accent-text" aria-hidden="true" />
-            <h3 id={`details-heading-${ticket.id}`} className="text-md font-semibold text-text">Ticket details</h3>
-          </div>
-          <div className="grid min-w-0 gap-4 md:grid-cols-[minmax(0,1fr)_14rem] md:items-end">
-            <Field label="Ticket title" htmlFor={`ticket-title-${ticket.id}`}>
-              <div className="flex min-w-0 flex-col gap-2 md:flex-row">
-                <Input
-                  id={`ticket-title-${ticket.id}`}
-                  value={title}
-                  maxLength={300}
-                  disabled={saving !== null}
-                  onChange={(event) => { setTitle(event.target.value); setMessage(""); }}
-                  onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void saveTitle(); } }}
-                  className="h-10 min-w-0"
-                />
-                <Button variant="secondary" className="h-10 shrink-0" disabled={!titleChanged || saving !== null} loading={saving === "title"} onClick={() => void saveTitle()}>
-                  Save title
-                </Button>
-              </div>
-            </Field>
-            <Field label="Current status" htmlFor={`ticket-status-${ticket.id}`}>
-              <Select id={`ticket-status-${ticket.id}`} value={status} disabled={saving !== null} onChange={(event) => void saveStatus(event.target.value as WorkflowStatus)} className="h-10">
-                {TICKET_STATUS_ORDER.map((option) => <option key={option} value={option}>{TICKET_STATUS_LABELS[option]}</option>)}
-              </Select>
-            </Field>
-          </div>
-          {message ? <p role="status" aria-live="polite" className="mt-3 text-xs text-text-subtle">{message}</p> : null}
-        </section>
+      {journey ? <TicketJourney journey={journey} /> : null}
 
-        <section aria-labelledby={`add-update-heading-${ticket.id}`} className="border-t border-border pt-6">
+      <div className="flex min-w-0 flex-col gap-7 p-5 md:p-6">
+        <section aria-labelledby={`add-update-heading-${ticket.id}`}>
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div>
               <h3 id={`add-update-heading-${ticket.id}`} className="text-lg font-semibold text-text">Add a ticket update</h3>
               <p className="mt-1 max-w-[62ch] text-sm leading-6 text-text-muted">
-                Each submission becomes a new history entry. Direct ticket updates can be deleted; work-log notes stay protected.
+                Change the status, write an update, or both — then save once. Each update becomes a history entry; work-log notes stay protected.
               </p>
             </div>
             <span className="inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-success-subtle px-3 py-1.5 text-xs font-semibold text-success">
               <ShieldCheck className="size-4" aria-hidden="true" />Protected work-log history
             </span>
           </div>
-          <div className="mt-4">
-            <Field label="Update details" htmlFor={`ticket-body-${ticket.id}`} required>
+          <div className="mt-4 grid gap-4">
+            <Field label="Status" htmlFor={`ticket-status-${ticket.id}`} className="md:w-72">
+              <Select id={`ticket-status-${ticket.id}`} value={status} disabled={saving !== null} onChange={(event) => { setStatus(event.target.value as WorkflowStatus); setMessage(""); }} className="h-10">
+                {TICKET_STATUS_ORDER.map((option) => <option key={option} value={option}>{TICKET_STATUS_LABELS[option]}</option>)}
+              </Select>
+            </Field>
+            <Field label="Update details" htmlFor={`ticket-body-${ticket.id}`} hint="Optional when you're only changing the status.">
               <MarkdownEditor
                 id={`ticket-body-${ticket.id}`}
                 value={body}
                 onChange={(value) => { setBody(value); setMessage(""); }}
-                placeholder="Describe what changed, decisions made, or what should happen next…"
                 ariaLabel="Ticket update details"
                 minHeight="min-h-32"
               />
             </Field>
           </div>
           <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <p className="text-xs text-text-subtle">Saved with status: {TICKET_STATUS_LABELS[status]}</p>
-            <Button className="md:min-w-40" disabled={!body.trim() || saving !== null} loading={saving === "body"} onClick={() => void addHistoryEntry()}>
-              Add to history
+            <p role="status" aria-live="polite" className="text-xs text-text-subtle">
+              {message || (statusChanged ? `Status will change: ${TICKET_STATUS_LABELS[ticket.status]} → ${TICKET_STATUS_LABELS[status]}` : `Current status: ${TICKET_STATUS_LABELS[ticket.status]}`)}
+            </p>
+            <Button className="md:min-w-40" disabled={(!body.trim() && !statusChanged) || saving !== null} loading={saving !== null} onClick={() => void saveUpdate()}>
+              Save
             </Button>
           </div>
         </section>
@@ -461,4 +420,95 @@ function formatTicketDate(value: string) {
 
 function formatTimelineDate(value: string) {
   return format(new Date(value), "d MMM yyyy, h:mm a");
+}
+
+
+// ---------------------------------------------------------------------------
+// Ticket timeline — when each stage was first reached and how long it took.
+// ---------------------------------------------------------------------------
+
+type Journey = {
+  stages: Array<{ status: WorkflowStatus; date: Date | null }>;
+  start: Date;
+  end: Date;
+  done: boolean;
+  workingDays: number;
+  /** Holiday / Leave days inside the span that were not counted. */
+  daysOffSkipped: number;
+};
+
+function dayOf(value: string | Date) {
+  const date = new Date(value);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/** Weekdays from start to end (inclusive), minus days marked Holiday / Leave. */
+function countWorkingDays(start: Date, end: Date, daysOff: Set<string>) {
+  let working = 0;
+  let skipped = 0;
+  for (let day = new Date(start); day <= end; day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1)) {
+    if (day.getDay() === 0 || day.getDay() === 6) continue;
+    if (daysOff.has(format(day, "yyyy-MM-dd"))) skipped += 1;
+    else working += 1;
+  }
+  return { working, skipped };
+}
+
+/**
+ * Start = the first time the ticket was In Progress (else when it was created);
+ * end = the first time it reached Done (else today, still open). Work-log
+ * updates count on their work log's date; direct updates on when they were written.
+ */
+function ticketJourney(ticket: TicketBoardItem, detail: TicketDetail, daysOff: Set<string>): Journey {
+  const events = [
+    ...detail.updates.map((entry) => ({ status: entry.status, date: dayOf(entry.workLog?.date ?? entry.createdAt) })),
+    ...detail.historyEntries.map((entry) => ({ status: entry.status, date: dayOf(entry.createdAt) })),
+  ].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const firstReached = (status: WorkflowStatus) => events.find((event) => event.status === status)?.date ?? null;
+  const created = dayOf(ticket.createdAt);
+  const start = firstReached("InProgress") ?? created;
+  const doneAt = events.find((event) => event.status === "Done" && event.date >= start)?.date ?? null;
+  const end = doneAt ?? dayOf(new Date());
+
+  const { working, skipped } = countWorkingDays(start, end, daysOff);
+  return {
+    stages: TICKET_STATUS_ORDER.map((status) => ({ status, date: status === "InProgress" ? start : firstReached(status) })),
+    start,
+    end,
+    done: doneAt !== null,
+    workingDays: working,
+    daysOffSkipped: skipped,
+  };
+}
+
+function TicketJourney({ journey }: { journey: Journey }) {
+  const reachedIndex = journey.stages.reduce((last, stage, index) => (stage.date ? index : last), 0);
+  return (
+    <section aria-label="Ticket timeline" className="mx-5 mb-1 mt-4 rounded-xl border border-border bg-surface p-4 md:mx-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-text"><CalendarDays className="size-4 text-accent-text" aria-hidden="true" />Ticket timeline</h3>
+        <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", journey.done ? "bg-status-completed text-primary-fg" : "bg-status-progress text-primary-fg")}>
+          {journey.done ? "Done in" : "Open for"} {journey.workingDays} {journey.workingDays === 1 ? "day" : "days"}
+        </span>
+      </div>
+      <ol className="grid grid-cols-5 gap-1">
+        {journey.stages.map((stage, index) => {
+          const reached = stage.date !== null;
+          return (
+            <li key={stage.status} className="relative flex min-w-0 flex-col items-center text-center">
+              {index > 0 ? <span aria-hidden="true" className={cn("absolute top-2 right-1/2 h-0.5 w-full -translate-y-1/2", index <= reachedIndex ? "bg-primary" : "bg-border")} /> : null}
+              <span aria-hidden="true" className={cn("relative z-10 size-4 rounded-full border-2", reached ? cn("border-transparent", TICKET_STATUS_DOT[stage.status]) : "border-border-strong bg-surface")} />
+              <span className={cn("mt-2 text-xs font-semibold leading-tight", reached ? "text-text" : "text-text-subtle")}>{TICKET_STATUS_LABELS[stage.status]}</span>
+              <span className="mt-0.5 text-xs text-text-muted tabular-nums">{stage.date ? format(stage.date, "d MMM") : "—"}</span>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="mt-3 text-xs text-text-muted">
+        Started {format(journey.start, "EEE d MMM")} {journey.done ? `· Done ${format(journey.end, "EEE d MMM")}` : "· not done yet"}
+        {journey.daysOffSkipped > 0 ? ` · ${journey.daysOffSkipped} holiday/leave ${journey.daysOffSkipped === 1 ? "day" : "days"} not counted` : ""}
+      </p>
+    </section>
+  );
 }

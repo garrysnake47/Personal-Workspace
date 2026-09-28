@@ -54,7 +54,7 @@ export const authConfig = {
         // Already signed in? Don't show login/register again — but `/` is
         // the marketing page and stays visible to everyone.
         if (loggedIn && (pathname === "/login" || pathname === "/register")) {
-          return Response.redirect(new URL("/work-logs", request.nextUrl));
+          return Response.redirect(new URL("/tracker", request.nextUrl));
         }
         return true;
       }

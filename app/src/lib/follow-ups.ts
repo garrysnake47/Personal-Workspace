@@ -51,6 +51,7 @@ const FOLLOW_UP_SELECT = {
   subject: true,
   ticketKey: true,
   status: true,
+  pinned: true,
   dueDate: true,
   completedAt: true,
   createdAt: true,
@@ -141,6 +142,16 @@ export async function setFollowUpStatus(
       status,
       completedAt: status === FollowUpStatus.Done ? new Date() : null,
     },
+  });
+  if (result.count === 0) return null;
+  return getFollowUp(userId, followUpId);
+}
+
+/** Flag / unflag an entry as important. Scoped to the owner. */
+export async function setFollowUpPinned(userId: string, followUpId: string, pinned: boolean) {
+  const result = await prisma.followUp.updateMany({
+    where: { id: followUpId, userId },
+    data: { pinned },
   });
   if (result.count === 0) return null;
   return getFollowUp(userId, followUpId);

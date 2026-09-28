@@ -23,8 +23,8 @@ export const buttonVariants = cva(
   cn(
     "relative inline-flex cursor-pointer select-none items-center justify-center gap-2",
     "rounded-full font-semibold whitespace-nowrap",
-    "transition-[color,background-color,border-color,transform,opacity] duration-150 ease-standard",
-    "active:translate-y-px",
+    "transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-150 ease-standard",
+    "active:scale-[0.98]",
     "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0",
   ),
@@ -32,11 +32,10 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         // `primary-strong` is the text-safe teal (5.3:1 on white); `--primary`
-        // itself is reserved for large text and decorative fills. See the
-        // contrast rule at the top of memory/design.md.
+        // itself is reserved for large text and decorative fills.
         primary: cn(
-          "bg-sidebar text-sidebar-fg",
-          "hover:bg-sidebar-2 active:bg-sidebar-3",
+          "bg-sidebar text-sidebar-fg shadow-button",
+          "hover:bg-sidebar-2 active:bg-sidebar-3 active:shadow-none",
         ),
         subtle: cn(
           "bg-primary-subtle text-accent-text",
@@ -44,7 +43,7 @@ export const buttonVariants = cva(
         ),
         secondary: cn(
           // Same 3:1 boundary rule as the form controls.
-          "border border-border-strong bg-surface text-text",
+          "border border-border-strong bg-surface text-text shadow-xs",
           "hover:border-primary/60 hover:bg-surface-2 active:bg-surface-3",
         ),
         outline: cn(
@@ -55,7 +54,7 @@ export const buttonVariants = cva(
         ghost:
           "bg-transparent text-text-muted hover:bg-surface-2 hover:text-text active:bg-surface-3",
         danger: cn(
-          "bg-danger text-danger-fg",
+          "bg-danger text-danger-fg shadow-xs",
           "hover:opacity-90 active:opacity-80",
         ),
       },

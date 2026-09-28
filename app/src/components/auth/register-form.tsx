@@ -84,7 +84,7 @@ export function RegisterForm() {
         return;
       }
 
-      const signedIn = await login({ email, password }, "/work-logs");
+      const signedIn = await login({ email, password }, "/tracker");
       if (!signedIn.ok) {
         // The account exists; only the session failed. Send them to sign in.
         setError({

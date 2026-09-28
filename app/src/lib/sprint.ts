@@ -8,18 +8,20 @@ import { addDays, differenceInCalendarDays, startOfDay } from "date-fns";
  * Do not re-derive it anywhere; import `getSprint`.
  */
 
-/** Sprints are counted from this day. Local midnight, not UTC. */
+/** App default: sprints are counted from this day. Local midnight, not UTC. */
 export const SPRINT_CYCLE_ANCHOR = new Date(2026, 8, 2);
 export const SPRINT_CYCLE_DAYS = 14;
+
+/** A user's sprint calendar (set on the Profile page). */
+export type SprintConfig = { anchor: Date; days: number };
+export const DEFAULT_SPRINT: SprintConfig = { anchor: SPRINT_CYCLE_ANCHOR, days: SPRINT_CYCLE_DAYS };
 
 export type Sprint = { start: Date; end: Date; offset: number };
 
 /** The sprint window containing `date`, in local calendar days. */
-export function getSprint(date: Date): Sprint {
+export function getSprint(date: Date, config: SprintConfig = DEFAULT_SPRINT): Sprint {
   const day = startOfDay(date);
-  const offset = Math.floor(
-    differenceInCalendarDays(day, SPRINT_CYCLE_ANCHOR) / SPRINT_CYCLE_DAYS,
-  );
-  const start = addDays(SPRINT_CYCLE_ANCHOR, offset * SPRINT_CYCLE_DAYS);
-  return { start, end: addDays(start, SPRINT_CYCLE_DAYS - 1), offset };
+  const offset = Math.floor(differenceInCalendarDays(day, config.anchor) / config.days);
+  const start = addDays(config.anchor, offset * config.days);
+  return { start, end: addDays(start, config.days - 1), offset };
 }

@@ -13,7 +13,6 @@ import {
 
 import type { NoteFormState } from "@/actions/notes";
 import { Field } from "@/components/notes/note-field";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { EMPTY_NOTE_DOC } from "@/components/notes/editor-extensions";
 import { NoteIconPicker } from "@/components/notes/NoteIconPicker";
@@ -94,6 +93,8 @@ export function NoteForm({
       : seedSections(base),
   );
   const [collapsed, setCollapsed] = useState<string[]>([]);
+  /** Page ids whose editor is folded away (header still shows). */
+  const [collapsedPages, setCollapsedPages] = useState<string[]>([]);
   /**
    * Client validation runs the very same Zod schema as the action, so its
    * error keys already line up with `state.errors`. When it has an opinion it
@@ -167,13 +168,36 @@ export function NoteForm({
   const updateSection = (id: string, next: SectionDraft) =>
     setSections((rows) => rows.map((row) => (row.id === id ? next : row)));
 
+  /** Scroll a section/page into view once React has rendered it. */
+  const reveal = (elementId: string) =>
+    window.setTimeout(() => document.getElementById(elementId)?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+
   const addSection = () => {
     const section: SectionDraft = {
       id: newId(),
       title: "",
       pages: [emptyPage(newId())],
     };
+    // Fold the sections already written so the new one has the stage.
+    setCollapsed(sections.map((row) => row.id));
     setSections((rows) => [...rows, section]);
+    reveal(`note-section-${section.id}`);
+  };
+
+  const addPage = (section: SectionDraft) => {
+    const page = emptyPage(newId());
+    // Fold this section's other pages; keep the section itself open.
+    setCollapsedPages((open) => [...new Set([...open, ...section.pages.map((row) => row.id)])]);
+    setCollapsed((open) => open.filter((id) => id !== section.id));
+    updateSection(section.id, { ...section, pages: [...section.pages, page] });
+    reveal(`note-page-${page.id}`);
+  };
+
+  /** From the outline: open the section (and page) and bring it into view. */
+  const jumpTo = (sectionId: string, pageId?: string) => {
+    setCollapsed((open) => open.filter((id) => id !== sectionId));
+    if (pageId) setCollapsedPages((open) => open.filter((id) => id !== pageId));
+    reveal(pageId ? `note-page-${pageId}` : `note-section-${sectionId}`);
   };
 
   const duplicateSection = (index: number) => {
@@ -241,12 +265,13 @@ export function NoteForm({
         <input type="hidden" name="id" value={defaults.id} />
       ) : null}
 
-      <div className="sticky -top-6 z-30 -mx-5 -mt-6 mb-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-bg/95 px-5 pb-3 pt-6 backdrop-blur-[12px] sm:mb-6 sm:pb-3.5 md:-top-8 md:-mx-8 md:-mt-8 md:px-8 md:pt-8">
+      <div className="sticky -top-6 z-30 -mx-5 -mt-6 mb-5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border bg-bg/95 px-5 pb-3 pt-6 backdrop-blur-[12px] md:mb-6 md:pb-3.5 md:-top-8 md:-mx-8 md:-mt-8 md:px-8 md:pt-8">
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-md font-semibold tracking-[-0.03em] text-text sm:text-text md:text-text">
-            {heading}
-          </h1>
-          <p className="text-xs text-text-muted sm:text-sm">
+          {/* The page title above already says "Edit note" — the bar names the note. */}
+          <p className="truncate text-md font-semibold tracking-[-0.03em] text-text">
+            {title.trim() || `Untitled · ${heading}`}
+          </p>
+          <p className="text-xs text-text-muted md:text-sm">
             {sections.length} section{sections.length === 1 ? "" : "s"} ·{" "}
             {pageCount} page{pageCount === 1 ? "" : "s"}
             <span aria-live="polite" className="text-text-subtle">
@@ -256,19 +281,19 @@ export function NoteForm({
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
           <Link
             href={
               defaults?.id ? `/notes/${defaults.id}` : "/notes"
             }
-            className="inline-flex h-[44px] items-center justify-center rounded-full px-3 text-sm font-medium text-text-muted transition-colors hover:text-text sm:h-[40px] sm:px-4"
+            className="inline-flex h-[44px] items-center justify-center rounded-full px-3 text-sm font-medium text-text-muted transition-colors hover:text-text md:h-[40px] md:px-4"
           >
             Cancel
           </Link>
           <button
             type="submit"
             disabled={isPending}
-            className="inline-flex h-[44px] items-center justify-center gap-2 rounded-full bg-sidebar px-4 text-sm font-medium text-sidebar-fg transition-colors hover:bg-sidebar-2 disabled:pointer-events-none disabled:opacity-70 sm:h-[40px] sm:px-5 sm:text-base"
+            className="inline-flex h-[44px] items-center justify-center gap-2 rounded-full bg-sidebar px-4 text-sm font-medium text-sidebar-fg transition-colors hover:bg-sidebar-2 disabled:pointer-events-none disabled:opacity-70 md:h-[40px] md:px-5 md:text-base"
           >
             {isPending ? (
               <>
@@ -296,60 +321,52 @@ export function NoteForm({
         Deliberately not a stack of cards — the hierarchy is carried by
         headings, indentation and hairlines.
       */}
+      <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start">
       <div className="w-full min-w-0">
-        <section className="min-w-0">
-          <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:gap-6">
-            {/*
-              Title and description share a row from `lg` up — the page is far
-              wider than either field needs on its own.
-            */}
-            <div className="grid min-w-0 gap-5 lg:grid-cols-2 lg:items-start lg:gap-6">
-              <Field label="Title" htmlFor="note-title" errors={errors?.title}>
-                <Input
-                  id="note-title"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder="Java Fundamentals"
-                />
-              </Field>
-
-              <Field
-                label="Note description"
-                htmlFor="note-description"
-                hint="A short summary"
-                optional
-                errors={errors?.description}
-              >
-                <Textarea
-                  id="note-description"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  rows={3}
-                  placeholder="What this note covers, in a sentence or two."
-                />
-              </Field>
-            </div>
-
-            <div className="min-w-0 md:w-[220px] lg:w-[240px]">
-              <NoteIconPicker
-                value={icon}
-                onChange={setIcon}
-                label="Note icon"
+        <section aria-labelledby="note-details-heading" className="wl-card min-w-0 p-5 md:p-6">
+          <h2 id="note-details-heading" className="mb-4 text-lg font-semibold tracking-[-0.015em] text-text">Details</h2>
+          {/* Title, description and icon on one row, all the same height. */}
+          <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_auto] md:items-end md:gap-4">
+            <Field label="Title" htmlFor="note-title" errors={errors?.title}>
+              <Input
+                id="note-title"
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                placeholder="Java Fundamentals"
               />
+            </Field>
+
+            <Field
+              label="Description"
+              htmlFor="note-description"
+              optional
+              errors={errors?.description}
+            >
+              <Input
+                id="note-description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+              />
+            </Field>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-text">Icon</span>
+              <NoteIconPicker value={icon} onChange={setIcon} label="Note icon" />
             </div>
           </div>
         </section>
 
-        <div className="mt-7 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-border-strong pt-6 sm:mt-8 sm:pt-7">
-          <h2 className="text-base font-semibold tracking-[-0.01em] text-text sm:text-base">
+        <div className="mt-8 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h2 className="flex items-baseline gap-2 text-lg font-semibold tracking-[-0.015em] text-text">
             Sections
+            <span className="text-sm font-medium text-text-subtle tabular-nums">{sections.length}</span>
           </h2>
-          <p className="text-xs text-text-muted sm:text-sm">
+          <p className="text-xs text-text-muted md:text-sm">
             Drag a section or page by its handle to reorder it.
           </p>
         </div>
 
-        <div className="mt-5 min-w-0 sm:mt-6">
+        <div className="mt-4 min-w-0">
           <Reorder.Group
             as="div"
             axis="y"
@@ -382,13 +399,14 @@ export function NoteForm({
                     rows.filter((row) => row.id !== section.id),
                   )
                 }
-                onAddPage={() =>
-                  updateSection(section.id, {
-                    ...section,
-                    pages: [...section.pages, emptyPage(newId())],
-                  })
-                }
+                onAddPage={() => addPage(section)}
                 onMovePage={movePage}
+                collapsedPages={collapsedPages}
+                onTogglePage={(pageId) =>
+                  setCollapsedPages((open) =>
+                    open.includes(pageId) ? open.filter((id) => id !== pageId) : [...open, pageId],
+                  )
+                }
               />
             ))}
           </Reorder.Group>
@@ -398,9 +416,9 @@ export function NoteForm({
           type="button"
           onClick={addSection}
           className={cn(
-            "mt-7 inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-2 sm:mt-8 sm:min-h-0",
-            "text-sm font-medium text-text transition-colors",
-            "hover:border-border-strong hover:bg-surface-2",
+            "mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-border-strong/60 bg-surface px-4 py-3",
+            "text-sm font-semibold text-text-muted transition-colors",
+            "hover:border-primary hover:bg-card-tint hover:text-accent-text",
             "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
           )}
         >
@@ -408,7 +426,53 @@ export function NoteForm({
           Add section
         </button>
       </div>
+
+      <NoteOutline sections={sections} collapsed={collapsed} onJump={jumpTo} />
+      </div>
     </form>
+  );
+}
+
+/**
+ * "At a glance": every section and its pages, sticky beside the editor.
+ * Clicking opens that section/page and scrolls to it.
+ */
+function NoteOutline({ sections, collapsed, onJump }: { sections: SectionDraft[]; collapsed: string[]; onJump: (sectionId: string, pageId?: string) => void }) {
+  return (
+    <aside aria-label="At a glance" className="wl-card hidden border-border-strong p-4 lg:sticky lg:top-44 lg:block">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.1em] text-text-subtle">At a glance</p>
+      <ol className="flex flex-col gap-3">
+        {sections.map((section, index) => (
+          <li key={section.id}>
+            <button
+              type="button"
+              onClick={() => onJump(section.id)}
+              className="flex w-full cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-surface-2"
+            >
+              <span className="grid size-5 shrink-0 place-items-center rounded bg-sidebar text-2xs font-bold text-sidebar-fg">{index + 1}</span>
+              <span className={cn("min-w-0 flex-1 truncate text-sm font-semibold", section.title.trim() ? "text-text" : "text-text-subtle")}>
+                {section.title.trim() || "Untitled section"}
+              </span>
+              {collapsed.includes(section.id) ? <span className="text-2xs text-text-subtle">folded</span> : null}
+            </button>
+            <ol className="ml-4 mt-1 flex flex-col border-l border-border pl-2">
+              {section.pages.map((page, pageIndex) => (
+                <li key={page.id}>
+                  <button
+                    type="button"
+                    onClick={() => onJump(section.id, page.id)}
+                    className={cn("flex w-full cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-sm transition-colors hover:bg-surface-2", page.title.trim() ? "text-text-muted hover:text-text" : "text-text-subtle")}
+                  >
+                    <span className="shrink-0 text-2xs tabular-nums text-text-subtle">{pageIndex + 1}.</span>
+                    <span className="truncate">{page.title.trim() || "Untitled page"}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </li>
+        ))}
+      </ol>
+    </aside>
   );
 }
 

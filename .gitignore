@@ -11,5 +11,8 @@ out/
 
 # Local machine / tool state
 .DS_Store
-.claude/settings.local.json
 *.log
+
+# Python bytecode (from the ui-ux-pro-max skill scripts)
+__pycache__/
+*.pyc
