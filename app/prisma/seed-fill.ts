@@ -17,7 +17,10 @@ import { EntryKind, TicketStatus } from "../src/generated/prisma/enums";
  *   npm run db:seed:fill -- you@example.com 10    -> a longer window
  *
  * Additive and idempotent:
- *   - a date that already has a work log is skipped entirely
+ *   - a date with a work log that has content (ticket work or Work done notes)
+ *     is skipped entirely
+ *   - a date with an EMPTY log (auto-created by opening the day) is topped up:
+ *     blank meeting notes and ticket work are filled; nothing is overwritten
  *   - ticket updates are upserted on (ticketId, workLogId)
  *   - a ticket's stage only ever moves FORWARD. `seed-bulk` restarts its arcs
  *     from step 0 on every run, which can walk a Released ticket back to
@@ -206,6 +209,7 @@ async function main() {
   let createdLogs = 0;
   let createdUpdates = 0;
   let skipped = 0;
+  let toppedUp = 0;
 
   for (let d = days - 1; d >= 0; d--) {
     const date = daysAgo(d);
@@ -213,14 +217,24 @@ async function main() {
 
     const existing = await prisma.workLog.findUnique({
       where: { userId_date: { userId, date } },
-      select: { id: true },
+      select: { id: true, learningNotes: true, _count: { select: { ticketUpdates: true } } },
     });
-    if (existing) {
+    if (existing && (existing._count.ticketUpdates > 0 || existing.learningNotes.trim())) {
       skipped++;
       continue;
     }
 
-    const workLog = await prisma.workLog.create({
+    if (existing) {
+      // Fill only the blank meeting cards; never overwrite what's there.
+      const blank = await prisma.meeting.findMany({ where: { workLogId: existing.id, notes: "" }, select: { id: true, name: true } });
+      for (const meeting of blank) {
+        const pool = NOTES[meeting.name as keyof typeof NOTES];
+        if (pool && chance(0.75)) await prisma.meeting.update({ where: { id: meeting.id }, data: { notes: pick(pool) } });
+      }
+      toppedUp++;
+    }
+
+    const workLog = existing ?? await prisma.workLog.create({
       data: {
         userId,
         title: "Daily Work Log",
@@ -237,7 +251,7 @@ async function main() {
         },
       },
     });
-    createdLogs++;
+    if (!existing) createdLogs++;
 
     // 2-3 tickets touched, each moving forward at most one stage.
     const touched = new Set<string>();
@@ -279,7 +293,7 @@ async function main() {
       await prisma.ticket.update({ where: { id: t.id }, data: { status } });
     }
 
-    console.log(`  ${iso(date)}  log + ${touched.size} ticket updates`);
+    console.log(`  ${iso(date)}  ${existing ? "empty log topped up" : "log"} + ${touched.size} ticket updates`);
   }
 
   // ---- tracker entries ----------------------------------------------------
@@ -304,7 +318,7 @@ async function main() {
   }
 
   console.log(
-    `\ndone — ${createdLogs} work logs, ${createdUpdates} ticket updates, ` +
+    `\ndone — ${createdLogs} work logs, ${toppedUp} empty logs topped up, ${createdUpdates} ticket updates, ` +
       `${createdEntries} tracker entries` +
       (skipped ? ` (${skipped} date${skipped > 1 ? "s" : ""} already had a log)` : ""),
   );

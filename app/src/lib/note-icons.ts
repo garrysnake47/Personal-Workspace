@@ -32,15 +32,6 @@ export type IconIndex = {
   byId: Map<string, IconEntry>;
 };
 
-export const ICON_LIBRARIES: Record<
-  IconLibrary,
-  { id: IconLibrary; title: string }
-> = {
-  si: { id: "si", title: "Simple Icons" },
-  lu: { id: "lu", title: "Lucide" },
-  fa6: { id: "fa6", title: "Font Awesome 6" },
-};
-
 /**
  * Filter tabs. Font Awesome 6 ships brand marks and general-purpose glyphs in
  * one module with nothing in the export name to tell them apart, so it sits in

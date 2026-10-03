@@ -4,7 +4,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../src/generated/prisma/client";
 import {
-  ResourceType,
   TaskPriority,
   TaskStatus,
   TicketStatus,
@@ -142,15 +141,15 @@ const LINK_SEEDS: Array<[string, string, string, string, string[]]> = [
   ["Timesheet", "https://example.bamboohr.com/time_tracking", "Weekly hours — due Friday", "Admin", ["admin", "weekly"]],
 ];
 
-const RESOURCE_SEEDS: Array<[string, string, ResourceType, string | null, string, string[]]> = [
-  ["Reset local database", "Drops, migrates and reseeds in one go.", ResourceType.Command, null, "npm run db:down && npm run db:up && npm run db:migrate && npm run db:seed", ["db", "local"]],
-  ["Tail production logs for one service", "Replace SERVICE.", ResourceType.Command, null, "kubectl logs -f deploy/SERVICE -n production --since=15m --tail=200", ["k8s", "prod"]],
-  ["Find the slowest queries", "Postgres, needs pg_stat_statements.", ResourceType.Snippet, null, "SELECT calls, mean_exec_time, query\nFROM pg_stat_statements\nORDER BY mean_exec_time DESC\nLIMIT 20;", ["postgres", "performance"]],
-  ["Idempotent worker handler", "The pattern from ASU-1234.", ResourceType.Snippet, null, "async function handle(job) {\n  const key = idempotencyKey(job);\n  if (await seen(key)) return;\n  await withBackoff(() => process(job), { attempts: 5, jitter: true });\n  await mark(key);\n}", ["worker", "pattern"]],
-  ["Prisma relation queries", "Official docs — nested reads and writes.", ResourceType.Documentation, "https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries", "", ["prisma", "docs"]],
-  ["WCAG contrast minimums", "4.5:1 body text, 3:1 large text and UI boundaries.", ResourceType.Documentation, "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html", "", ["a11y"]],
-  ["Postgres EXPLAIN, visualised", "Paste a plan, get a readable tree.", ResourceType.Tool, "https://explain.dalibo.com/", "", ["postgres", "tool"]],
-  ["Writing a blameless postmortem", "The template we settled on.", ResourceType.Reference, null, "1. Impact — who, how long, how bad\n2. Timeline — detection to resolution\n3. Root cause — mechanism, not a person\n4. Detection gap — why we didn't know sooner\n5. Actions — owned and dated", ["process", "postmortem"]],
+const RESOURCE_SEEDS: Array<[string, string, string, string | null, string, string[]]> = [
+  ["Reset local database", "Drops, migrates and reseeds in one go.", "Command", null, "npm run db:down && npm run db:up && npm run db:migrate && npm run db:seed", ["db", "local"]],
+  ["Tail production logs for one service", "Replace SERVICE.", "Command", null, "kubectl logs -f deploy/SERVICE -n production --since=15m --tail=200", ["k8s", "prod"]],
+  ["Find the slowest queries", "Postgres, needs pg_stat_statements.", "Snippet", null, "SELECT calls, mean_exec_time, query\nFROM pg_stat_statements\nORDER BY mean_exec_time DESC\nLIMIT 20;", ["postgres", "performance"]],
+  ["Idempotent worker handler", "The pattern from ASU-1234.", "Snippet", null, "async function handle(job) {\n  const key = idempotencyKey(job);\n  if (await seen(key)) return;\n  await withBackoff(() => process(job), { attempts: 5, jitter: true });\n  await mark(key);\n}", ["worker", "pattern"]],
+  ["Prisma relation queries", "Official docs — nested reads and writes.", "Documentation", "https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries", "", ["prisma", "docs"]],
+  ["WCAG contrast minimums", "4.5:1 body text, 3:1 large text and UI boundaries.", "Documentation", "https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html", "", ["a11y"]],
+  ["Postgres EXPLAIN, visualised", "Paste a plan, get a readable tree.", "Tool", "https://explain.dalibo.com/", "", ["postgres", "tool"]],
+  ["Writing a blameless postmortem", "The template we settled on.", "Reference", null, "1. Impact — who, how long, how bad\n2. Timeline — detection to resolution\n3. Root cause — mechanism, not a person\n4. Detection gap — why we didn't know sooner\n5. Actions — owned and dated", ["process", "postmortem"]],
 ];
 
 async function main() {

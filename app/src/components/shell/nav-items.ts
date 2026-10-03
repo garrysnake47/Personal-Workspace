@@ -31,8 +31,6 @@ export function navFor(ticketsEnabled: boolean): NavItem[] {
   return ticketsEnabled ? PRIMARY_NAV : PRIMARY_NAV.filter((item) => item.href !== "/tickets");
 }
 
-export const SECONDARY_NAV: NavItem[] = [];
-
 export function isActivePath(pathname: string, item: NavItem): boolean {
   if (item.exact) return pathname === item.href;
   return pathname === item.href || pathname.startsWith(`${item.href}/`);

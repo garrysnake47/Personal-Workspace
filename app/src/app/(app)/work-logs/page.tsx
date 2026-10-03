@@ -95,10 +95,10 @@ export default async function WorkLogsPage() {
         description="Capture the day once, then revisit it as a clean timeline."
       />
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4">
         <CreateWorkLogForm existingLogs={logs.map((log) => ({ id: log.id, date: format(log.date, "yyyy-MM-dd") }))} today={todaySummary} />
 
-        <section aria-labelledby="work-log-periods-heading" className="wl-card flex min-w-0 flex-col gap-5 p-5 md:p-6">
+        <section aria-labelledby="work-log-periods-heading" className="wl-card flex min-w-0 flex-col gap-4 p-4 md:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 id="work-log-periods-heading" className="text-lg font-semibold tracking-[-0.015em] text-text">Sprint timeline</h2>
             <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-medium text-text-muted" aria-label="Legend">
@@ -111,13 +111,13 @@ export default async function WorkLogsPage() {
           {currentPeriod ? <SprintTable period={currentPeriod} currentOffset={currentOffset} today={today} sprintDays={sprint.days} showTickets={settings.ticketsEnabled} /> : null}
 
           {previousPeriods.length > 0 ? (
-            <details className="motion-disclosure group mt-2 border-t border-border pt-4">
+            <details className="motion-disclosure group/disclosure mt-2 border-t border-border pt-4">
               <summary className="flex w-fit cursor-pointer list-none items-center gap-2 rounded-full border border-border-strong px-4 py-2 text-sm font-semibold text-accent-text transition-colors hover:border-primary hover:bg-primary-subtle [&::-webkit-details-marker]:hidden">
                 <History className="size-4" aria-hidden="true" />
-                <span className="group-open:hidden">Show previous sprints</span>
-                <span className="hidden group-open:inline">Hide previous sprints</span>
+                <span className="group-open/disclosure:hidden">Show previous sprints</span>
+                <span className="hidden group-open/disclosure:inline">Hide previous sprints</span>
                 <span className="rounded-full bg-sidebar px-2 py-0.5 text-xs text-sidebar-fg tabular-nums">{previousPeriods.length}</span>
-                <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                <ChevronDown className="size-4 transition-transform group-open/disclosure:rotate-180" aria-hidden="true" />
               </summary>
               <div className="motion-disclosure-content mt-5 flex flex-col gap-8">
                 {previousPeriods.map((period) => <SprintTable key={period.start.toISOString()} period={period} currentOffset={currentOffset} today={today} sprintDays={sprint.days} showTickets={settings.ticketsEnabled} />)}
@@ -162,7 +162,7 @@ function SprintTable({ period, currentOffset, today, sprintDays, showTickets }: 
         </div>
       </div>
 
-      <ol className="grid grid-cols-2 gap-2 md:grid-cols-5">
+      <ol data-reveal-stagger className="grid grid-cols-2 gap-2 md:grid-cols-5">
         {days.map((day, index) => {
           const isToday = isSameDay(day, today);
           const future = day > today && !isToday;
@@ -180,10 +180,10 @@ function SprintTable({ period, currentOffset, today, sprintDays, showTickets }: 
             return (
               <li key={day.toISOString()} className="min-w-0">
                 <Link
-                  href={`/work-logs/${log.id}/edit`}
-                  aria-label={`${format(day, "EEEE d MMMM")}: ${holiday ? "Holiday" : "Leave"} — edit`}
+                  href={`/work-logs/${log.id}`}
+                  aria-label={`${format(day, "EEEE d MMMM")}: ${holiday ? "Holiday" : "Leave"} — view timeline`}
                   className={cn(
-                    "wl-off group flex h-full min-h-32 flex-col gap-2 rounded-xl p-3 hover:-translate-y-0.5 hover:shadow-lg transition-[border-color,transform,box-shadow] duration-150 hover:border-sidebar",
+                    "wl-off group flex h-full min-h-28 flex-col gap-2 rounded-xl p-3 hover:-translate-y-0.5 hover:shadow-lg transition-[border-color,transform,box-shadow] duration-150 hover:border-sidebar",
                     isToday ? "border-2 border-primary" : "border border-accent-text/45",
                   )}
                 >
@@ -205,10 +205,10 @@ function SprintTable({ period, currentOffset, today, sprintDays, showTickets }: 
             return (
               <li key={day.toISOString()} className="relative min-w-0 hover:z-10 focus-within:z-10">
                 <Link
-                  href={`/work-logs/${log.id}/edit`}
-                  aria-label={`${format(day, "EEEE d MMMM")}: ${log.title}, ${tickets.length} ${tickets.length === 1 ? "ticket" : "tickets"} — edit`}
+                  href={`/work-logs/${log.id}`}
+                  aria-label={`${format(day, "EEEE d MMMM")}: ${log.title}, ${tickets.length} ${tickets.length === 1 ? "ticket" : "tickets"} — view timeline`}
                   className={cn(
-                    "group relative flex h-full min-h-32 flex-col gap-2 rounded-xl border p-3 hover:-translate-y-0.5 hover:shadow-lg transition-[border-color,background-color,transform,box-shadow] duration-150",
+                    "group relative flex h-full min-h-28 flex-col gap-2 rounded-xl border p-3 hover:-translate-y-0.5 hover:shadow-lg transition-[border-color,background-color,transform,box-shadow] duration-150",
                     isToday ? "border-primary bg-primary text-primary-fg hover:bg-primary-hover" : "border-border bg-card-tint hover:border-primary hover:bg-surface focus-visible:border-primary focus-visible:bg-surface",
                   )}
                 >
@@ -254,7 +254,7 @@ function SprintTable({ period, currentOffset, today, sprintDays, showTickets }: 
           }
 
           return (
-            <li key={day.toISOString()} className="flex min-h-32 cursor-default select-none flex-col gap-2 rounded-xl border border-border bg-surface-2 p-3 opacity-60">
+            <li key={day.toISOString()} className="flex min-h-28 cursor-default select-none flex-col gap-2 rounded-xl border border-border bg-surface-2 p-3 opacity-60">
               {dateLabel}
               <span className="mt-auto text-xs font-medium text-text-subtle">Upcoming</span>
             </li>

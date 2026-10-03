@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Check, ChevronLeft, ChevronRight, Eye, MessagesSquare, Paperclip, Plane, Sun, Ticket } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, ClipboardCheck, Eye, MessagesSquare, Paperclip, Plane, Sun, Ticket } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useRef, useState, useTransition } from "react";
@@ -15,6 +15,7 @@ import { DayTypeToggle } from "@/components/work-log/day-type-toggle";
 import { MeetingSection } from "@/components/work-log/meeting-section";
 import { SaveStatusIndicator, SaveStatusProvider, type SaveResult } from "@/components/work-log/save-status";
 import { AttachmentsSection } from "@/components/work-log/attachments-section";
+import { DayTodos, type DayTodo } from "@/components/work-log/day-todos";
 import { LearningSection } from "@/components/work-log/learning-section";
 import { TicketSearch } from "@/components/work-log/ticket-search";
 import { TicketWorkCard } from "@/components/work-log/ticket-work-card";
@@ -57,7 +58,7 @@ function AdjacentLink({ log, direction }: { log: AdjacentLog; direction: "previo
   );
 }
 
-export function WorkLogEditor({ workLog, relative, adjacent, ticketsEnabled }: { workLog: EditorWorkLog; relative: string; adjacent: { previous: AdjacentLog; next: AdjacentLog }; ticketsEnabled: boolean }) {
+export function WorkLogEditor({ workLog, relative, adjacent, ticketsEnabled, dayTodos }: { workLog: EditorWorkLog; relative: string; adjacent: { previous: AdjacentLog; next: AdjacentLog }; ticketsEnabled: boolean; /** Tracker to-dos finished/overdue on this day. */ dayTodos: { date: string; todos: DayTodo[] } }) {
   const [title, setTitle] = useState(shownTitle(workLog.title));
   const [savedTitle, setSavedTitle] = useState(workLog.title);
   const [meetingsDone, setMeetingsDone] = useState(workLog.meetings.filter((meeting) => meeting.notes.trim()).length);
@@ -156,7 +157,7 @@ export function WorkLogEditor({ workLog, relative, adjacent, ticketsEnabled }: {
   const progress = [
     { id: "meetings-heading", label: "Meeting notes", Icon: MessagesSquare, value: `${meetingsDone} of ${workLog.meetings.length} written`, done: meetingsDone > 0 },
     ...(ticketsEnabled ? [{ id: "tickets-heading", label: "Ticket work", Icon: Ticket, value: tickets.length === 1 ? "1 ticket" : `${tickets.length} tickets`, done: tickets.length > 0 }] : []),
-    { id: "learning-heading", label: "Learning", Icon: BookOpen, value: learningWritten ? "Written" : "Not yet", done: learningWritten },
+    { id: "learning-heading", label: "Work done", Icon: ClipboardCheck, value: learningWritten ? "Written" : "Not yet", done: learningWritten },
     { id: "attachments-heading", label: "Attachments", Icon: Paperclip, value: attachmentCount === 1 ? "1 item" : `${attachmentCount} items`, done: attachmentCount > 0 },
   ];
 
@@ -251,6 +252,7 @@ export function WorkLogEditor({ workLog, relative, adjacent, ticketsEnabled }: {
             ) : null}
 
             <LearningSection workLogId={workLog.id} initialNotes={workLog.learningNotes} onFilledChange={setLearningWritten} />
+            <DayTodos date={dayTodos.date} todos={dayTodos.todos} />
             </div>
           </div>
 

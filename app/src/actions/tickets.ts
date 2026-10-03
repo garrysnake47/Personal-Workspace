@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUserId } from "@/lib/session";
+import { listProjectSuggestions } from "@/lib/user-lists";
 import { notFound, ok, parseOrFail } from "@/lib/result";
 import {
   addTicketWorkUpdate,
@@ -13,7 +14,6 @@ import {
   findTicketByKeyWithHistory,
   getTicketWithHistory,
   listActiveTickets as listActiveTicketsQuery,
-  listProjectNames as listProjectNamesQuery,
   listTickets as listTicketsQuery,
   updateTicket as updateTicketRow,
   upsertTicketForWorkLog as upsertTicketRow,
@@ -163,7 +163,8 @@ export async function listTickets(input?: unknown) {
 /** Project / site names already used on tickets — feeds the project autocomplete. */
 export async function listProjects() {
   const userId = await requireUserId();
-  return ok(await listProjectNamesQuery(userId));
+  // Profile's project list: names used on tickets + saved ones − removed ones.
+  return ok(await listProjectSuggestions(userId));
 }
 
 /** Dashboard card — Open / In Progress / Blocked. */

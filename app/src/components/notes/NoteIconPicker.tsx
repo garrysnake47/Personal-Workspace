@@ -40,6 +40,9 @@ export function NoteIconPicker({
   label = "Note icon",
   className,
   disabled,
+  align = "end",
+  placeholder,
+  triggerClassName,
 }: {
   value?: NoteIconRef | null;
   onChange: (icon: NoteIconRef | null) => void;
@@ -47,10 +50,17 @@ export function NoteIconPicker({
   label?: string;
   className?: string;
   disabled?: boolean;
+  /** Which trigger edge the panel lines up with: "end" grows left (form rails), "start" grows right (list rows). */
+  align?: "start" | "end";
+  /** Shown in the trigger when nothing is chosen (default: an "add image" glyph). */
+  placeholder?: React.ReactNode;
+  triggerClassName?: string;
 }) {
   const reduceMotion = useReducedMotion() ?? false;
 
   const [open, setOpen] = useState(false);
+  // Opens upward when there isn't room for the panel below the trigger.
+  const [placeAbove, setPlaceAbove] = useState(false);
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [scope, setScope] = useState<IconScope>("all");
@@ -232,7 +242,13 @@ export function NoteIconPicker({
         ref={triggerRef}
         type="button"
         disabled={disabled}
-        onClick={() => (open ? close() : setOpen(true))}
+        onClick={() => {
+          if (open) { close(); return; }
+          const rect = triggerRef.current?.getBoundingClientRect();
+          const PANEL = 470; // ≈ the panel's full height
+          if (rect) setPlaceAbove(window.innerHeight - rect.bottom < PANEL && rect.top > window.innerHeight - rect.bottom);
+          setOpen(true);
+        }}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-label={value ? `${label}: ${value.name}` : `${label}: none chosen`}
@@ -243,12 +259,13 @@ export function NoteIconPicker({
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
           "disabled:pointer-events-none disabled:opacity-60",
           open && "border-border-strong text-text",
+          triggerClassName,
         )}
       >
         {value ? (
           <NoteIcon icon={value} className="size-5 text-text" />
         ) : (
-          <ImagePlus aria-hidden="true" className="size-[18px]" />
+          placeholder ?? <ImagePlus aria-hidden="true" className="size-[18px]" />
         )}
       </button>
 
@@ -260,19 +277,22 @@ export function NoteIconPicker({
             aria-modal="false"
             aria-labelledby={headingId}
             onKeyDown={onPanelKeyDown}
-            initial={reduceMotion ? false : { opacity: 0, y: -4 }}
+            initial={reduceMotion ? false : { opacity: 0, y: placeAbove ? 4 : -4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -4 }}
+            exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: placeAbove ? 4 : -4 }}
             transition={{ duration: reduceMotion ? 0 : 0.16, ease: [0.22, 1, 0.36, 1] }}
             className={cn(
               /*
-                Right-anchored, not left. Every caller puts this trigger in a
+                Right-anchored by default. Most callers put this trigger in a
                 form's right-hand rail, so opening a 26rem panel rightwards
                 from `left-0` ran it straight off the viewport. Growing left
                 from the trigger's right edge keeps it on screen at every
-                width the rail itself survives.
+                width the rail itself survives. List rows pass align="start".
               */
-              "absolute right-0 top-[calc(100%+8px)] z-50 w-[min(88vw,26rem)] max-w-[26rem]",
+              "absolute z-50",
+              align === "start" ? "left-0" : "right-0",
+              placeAbove ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]",
+              "w-[min(88vw,26rem)] max-w-[26rem]",
               "rounded-[16px] bg-surface border border-border p-4",
               "shadow-[0_8px_30px_rgba(15,23,42,0.12)]",
             )}

@@ -2,11 +2,7 @@ import "server-only";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
-import {
-  EntryKind,
-  FollowUpChannel,
-  FollowUpStatus,
-} from "@/generated/prisma/enums";
+import { EntryKind, FollowUpStatus } from "@/generated/prisma/enums";
 
 /**
  * Follow-ups — "what did I tell whom, and when".
@@ -31,16 +27,30 @@ export type FollowUpInput = {
   dueDate?: Date | null;
   /** The first thing you told them. Optional — a thread can start empty. */
   note?: string;
-  channel?: FollowUpChannel;
+  channel?: string;
   /** When that first conversation happened. Defaults to now. */
   occurredAt?: Date | null;
+  /** Labels — used by Notes. Normalised by `normalizeTags`. */
+  tags?: string[];
 };
+
+/** Lowercase, no "#", spaces → dashes, de-duplicated — same rule as resources. */
+function normalizeTags(tags: string[] | undefined) {
+  return Array.from(
+    new Set(
+      (tags ?? [])
+        .map((tag) => tag.trim().replace(/^#+/, "").trim().toLowerCase().replace(/\s+/g, "-"))
+        .filter(Boolean),
+    ),
+  ).slice(0, 25);
+}
 
 const UPDATE_SELECT = {
   id: true,
   note: true,
   channel: true,
   occurredAt: true,
+  fromThem: true,
   createdAt: true,
 } satisfies Prisma.FollowUpUpdateSelect;
 
@@ -52,6 +62,7 @@ const FOLLOW_UP_SELECT = {
   ticketKey: true,
   status: true,
   pinned: true,
+  tags: true,
   dueDate: true,
   completedAt: true,
   createdAt: true,
@@ -62,8 +73,6 @@ const FOLLOW_UP_SELECT = {
     select: UPDATE_SELECT,
   },
 } satisfies Prisma.FollowUpSelect;
-
-export type FollowUpRecord = Awaited<ReturnType<typeof getFollowUp>>;
 
 export async function createFollowUp(userId: string, input: FollowUpInput) {
   const note = input.note?.trim();
@@ -80,6 +89,7 @@ export async function createFollowUp(userId: string, input: FollowUpInput) {
       subject: input.subject.trim(),
       ticketKey: input.ticketKey?.trim() || null,
       dueDate: input.dueDate ?? null,
+      tags: normalizeTags(input.tags),
       // A first note is written as a real update row, not as a field on the
       // thread, so day one is history in exactly the same shape as day ten.
       ...(note
@@ -88,7 +98,7 @@ export async function createFollowUp(userId: string, input: FollowUpInput) {
               create: {
                 userId,
                 note,
-                channel: input.channel ?? FollowUpChannel.Slack,
+                channel: input.channel ?? "Slack",
                 occurredAt: input.occurredAt ?? new Date(),
               },
             },
@@ -99,11 +109,19 @@ export async function createFollowUp(userId: string, input: FollowUpInput) {
   });
 }
 
-/** Appends one more thing you told them. Never touches the previous rows. */
+/**
+ * Appends one more row: something you told them, or (`fromThem`) their reply.
+ * Never touches the previous rows.
+ */
 export async function addFollowUpUpdate(
   userId: string,
   followUpId: string,
-  input: { note: string; channel?: FollowUpChannel; occurredAt?: Date | null },
+  input: {
+    note: string;
+    channel?: string;
+    occurredAt?: Date | null;
+    fromThem?: boolean;
+  },
 ) {
   // Ownership check first — `create` cannot express "only if this thread is mine".
   const owned = await prisma.followUp.findFirst({
@@ -117,8 +135,9 @@ export async function addFollowUpUpdate(
       followUpId,
       userId,
       note: input.note.trim(),
-      channel: input.channel ?? FollowUpChannel.Slack,
+      channel: input.channel ?? "Slack",
       occurredAt: input.occurredAt ?? new Date(),
+      fromThem: input.fromThem ?? false,
     },
   });
 
@@ -155,6 +174,44 @@ export async function setFollowUpPinned(userId: string, followUpId: string, pinn
   });
   if (result.count === 0) return null;
   return getFollowUp(userId, followUpId);
+}
+
+/** Replace an entry's tags. Tags are labels, not history, so they are editable. */
+export async function setFollowUpTags(userId: string, followUpId: string, tags: string[]) {
+  const result = await prisma.followUp.updateMany({
+    where: { id: followUpId, userId },
+    data: { tags: normalizeTags(tags) },
+  });
+  if (result.count === 0) return null;
+  return getFollowUp(userId, followUpId);
+}
+
+/**
+ * To-dos worth showing on one work log's day: finished around that day, or
+ * due on/before it and not finished before it. Deliberately a little wide (±1
+ * day) — the client narrows it to the user's own local calendar day, which the
+ * server can't know.
+ */
+export async function listTodosAroundDay(userId: string, day: Date) {
+  const DAY = 86_400_000;
+  const from = new Date(day.getTime() - DAY);
+  const to = new Date(day.getTime() + 2 * DAY);
+  return prisma.followUp.findMany({
+    where: {
+      userId,
+      kind: EntryKind.Task,
+      OR: [
+        { completedAt: { gte: from, lt: to } },
+        {
+          dueDate: { lte: day },
+          OR: [{ status: FollowUpStatus.Open }, { completedAt: { gte: from } }],
+        },
+      ],
+    },
+    orderBy: [{ dueDate: "asc" }, { completedAt: "asc" }],
+    select: { id: true, subject: true, status: true, pinned: true, dueDate: true, completedAt: true },
+    take: 100,
+  });
 }
 
 export async function rescheduleFollowUp(

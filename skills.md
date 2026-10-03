@@ -5,7 +5,7 @@
 > **Update the docs** (`AGENTS.md` §2). If you find a better way, or a new task
 > repeats, add or edit a recipe here.
 >
-> Last synced with the codebase: **2026-09-29**
+> Last synced with the codebase: **2026-10-02**
 
 ## Index
 
@@ -148,7 +148,7 @@ The established pattern (notes, resources, tracker `pinned`):
 ## 8. Add or change a design token
 
 1. Edit the raw value in `app/src/app/globals.css`: base in `:root`, workspace
-   override in `.app-shell` (homepage tokens live in `banner/banner.css`).
+   override in `.app-shell` (homepage tokens live in `(marketing)/home.css`).
 2. If it's new, map it into Tailwind in the `@theme inline` block so a utility exists
    (`--color-<name>: var(--c-<name>)`).
 3. Check contrast: text ≥ 4.5:1, control edges ≥ 3:1 against their real background.
@@ -163,7 +163,9 @@ The established pattern (notes, resources, tracker `pinned`):
 | Fresh demo user + ticket history | `npm run db:seed` | creates demo data; password from `SEED_PASSWORD` |
 | A realistic current sprint | `npm run db:seed:sprint -- <email>` | **resets that account's content** first |
 | A full Tracker | `npm run db:seed:tracker -- <email>` | replaces that account's tracker entries |
+| More Tracker data, keeping what's there | `npm run db:seed:tracker -- <email> --append` | adds a second dummy set; deletes nothing |
 | Notes + Resources study content | `npm run db:seed:workspace -- <email>` | replaces only its own titled items |
+| Achievements | `npm run db:seed:achievements -- <email>` | replaces only its own titled items |
 
 Without an email, scripts target the owner's account (`DEFAULT_EMAIL`). **Ask before
 running anything that replaces data.** New seeds: follow `seed-tracker.ts` (dotenv,
@@ -249,6 +251,6 @@ Other useful built-in / installed skills:
 | `engineering:deploy-checklist` | Before a Vercel deploy with migrations |
 | `engineering:debug` | Structured debugging of a reproducible bug |
 | `engineering:architecture` | Recording a larger decision (then summarise it in `Memory.md`) |
-| `engineering:tech-debt` | Deciding what legacy code (marketing/banner, dark tokens) to delete |
+| `engineering:tech-debt` | Deciding what legacy code (e.g. the dormant dark tokens) to delete |
 
 When a project skill is added or removed under `.claude/skills/`, update the table above.

@@ -12,6 +12,8 @@ export type ActionErrorCode =
   | "UNAUTHORIZED"
   | "NOT_FOUND"
   | "CONFLICT"
+  /** AI (OpenRouter) isn't set up or failed; the message says why. */
+  | "AI_UNAVAILABLE"
   | "INTERNAL_ERROR";
 
 export type ActionError = {

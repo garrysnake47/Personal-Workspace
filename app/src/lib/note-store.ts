@@ -53,30 +53,15 @@ export async function listNotes(userId: string): Promise<NoteSummary[]> {
       favorite: true,
       createdAt: true,
       updatedAt: true,
-      sections: { orderBy: { order: "asc" }, select: { title: true } },
+      sections: { orderBy: { order: "asc" }, select: { title: true, _count: { select: { pages: true } } } },
     },
   });
 
   return notes.map(({ sections, ...note }) => ({
     ...note,
     sectionTitles: sections.map((section) => section.title),
+    pageCount: sections.reduce((sum, section) => sum + section._count.pages, 0),
   }));
-}
-
-/** Notes in the trash, newest first. */
-export async function listTrashedNotes(userId: string) {
-  return prisma.note.findMany({
-    where: { userId, deletedAt: { not: null } },
-    orderBy: { deletedAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      description: true,
-      iconName: true,
-      iconLibrary: true,
-      deletedAt: true,
-    },
-  });
 }
 
 export async function getNote(
@@ -238,14 +223,6 @@ export async function restoreNote(userId: string, noteId: string) {
   const result = await prisma.note.updateMany({
     where: { id: noteId, userId, deletedAt: { not: null } },
     data: { deletedAt: null },
-  });
-  return result.count > 0;
-}
-
-/** The only call that actually removes a note. Sections and pages cascade. */
-export async function destroyNote(userId: string, noteId: string) {
-  const result = await prisma.note.deleteMany({
-    where: { id: noteId, userId, deletedAt: { not: null } },
   });
   return result.count > 0;
 }

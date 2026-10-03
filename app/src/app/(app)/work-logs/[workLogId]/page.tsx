@@ -4,16 +4,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 
+import { listTodosForDay } from "@/actions/follow-ups";
 import { getTicket } from "@/actions/tickets";
 import { getAdjacentWorkLogs, getWorkLog } from "@/actions/worklog";
 import { cn } from "@/components/cn";
 import { TICKET_STATUS_LABELS, TicketStatusBadge } from "@/components/ui/ticket-status-badge";
 import { attachmentHref, formatBytes } from "@/components/work-log/attachment-utils";
 import { CopyLogButton } from "@/components/work-log/copy-log-button";
+import { DayTodos } from "@/components/work-log/day-todos";
 import { DAY_LABEL, DEFAULT_TITLE } from "@/components/work-log/day-type";
 import { MarkdownContent } from "@/components/work-log/markdown-editor";
 import type { HistoryEntry } from "@/components/work-log/types";
 import { WorkLogGlance } from "@/components/work-log/work-log-glance";
+import { WorkLogSummary } from "@/components/work-log/work-log-summary";
+import { getAiSettings } from "@/lib/ai-settings";
 import { requireUser } from "@/lib/session";
 import { getUserSettings } from "@/lib/user-settings";
 
@@ -27,7 +31,7 @@ export default async function WorkLogViewPage({ params }: { params: Promise<{ wo
   const [result, adjacentResult, user] = await Promise.all([getWorkLog(workLogId), getAdjacentWorkLogs(workLogId), requireUser()]);
   if (!result.ok) notFound();
   const data = result.data;
-  const { ticketsEnabled } = await getUserSettings(user.id);
+  const [{ ticketsEnabled }, ai] = await Promise.all([getUserSettings(user.id), getAiSettings(user.id)]);
 
   // Full history per ticket (work-log updates + direct ticket updates), newest first.
   const histories = await Promise.all(data.ticketUpdates.map(async (update): Promise<HistoryEntry[]> => {
@@ -40,6 +44,16 @@ export default async function WorkLogViewPage({ params }: { params: Promise<{ wo
   }));
 
   const date = new Date(data.date);
+  // WorkLog.date is UTC midnight, so its ISO prefix is the calendar day.
+  const dayIso = date.toISOString().slice(0, 10);
+  const todosResult = await listTodosForDay({ date: dayIso });
+  const dayTodos = todosResult.ok
+    ? todosResult.data.map((todo) => ({
+        ...todo,
+        dueDate: todo.dueDate ? todo.dueDate.toISOString().slice(0, 10) : null,
+        completedAt: todo.completedAt?.toISOString() ?? null,
+      }))
+    : [];
   const createdAt = new Date(data.createdAt);
   const updatedAt = new Date(data.updatedAt);
   const customTitle = AUTO_TITLES.has(data.title) ? null : data.title;
@@ -58,7 +72,6 @@ export default async function WorkLogViewPage({ params }: { params: Promise<{ wo
   }));
   const meetings = [...data.meetings].sort((a, b) => a.order - b.order);
   const meetingsNoted = meetings.filter((meeting) => meeting.notes.trim()).length;
-  const projects = [...new Set(tickets.map((ticket) => ticket.projectName?.trim()).filter(Boolean))] as string[];
   const learning = data.learningNotes.trim();
   const attachments = data.attachments;
 
@@ -72,14 +85,14 @@ export default async function WorkLogViewPage({ params }: { params: Promise<{ wo
     isWork ? "" : `Day type: ${DAY_LABEL[data.dayType]}`,
     ticketsEnabled && tickets.length ? `\nTickets\n${tickets.map((ticket) => `- ${ticket.ticketKey} ${ticket.title}${ticket.projectName ? ` (${ticket.projectName})` : ""} [${TICKET_STATUS_LABELS[ticket.draft.status]}]${ticket.draft.description.trim() ? `\n  ${ticket.draft.description.trim().replace(/\n/g, "\n  ")}` : ""}`).join("\n")}` : "",
     meetingsNoted ? `\nMeetings\n${meetings.filter((meeting) => meeting.notes.trim()).map((meeting) => `${meeting.name}\n${meeting.notes.trim()}`).join("\n\n")}` : "",
-    learning ? `\nLearning\n${learning}` : "",
+    learning ? `\nWork done\n${learning}` : "",
     attachments.length ? `\nLinks & files\n${attachments.map((item) => `- ${item.name}${item.kind === "Link" && item.url ? `: ${item.url}` : ""}`).join("\n")}` : "",
   ].filter(Boolean).join("\n");
 
   return (
     <div className="work-logs-page work-log-detail-page flex flex-col gap-5">
       {/* Header */}
-      <header className="wl-card wl-hero motion-page-enter flex flex-col gap-5 p-5 md:p-7">
+      <header className="wl-card wl-hero motion-page-enter flex flex-col gap-3 px-4 py-4 md:px-6">
         <div className="flex items-center justify-between gap-3">
           <Link href="/work-logs" className="inline-flex items-center gap-1 text-sm font-semibold text-text-muted hover:text-text">
             <ChevronLeft className="size-4" aria-hidden="true" />All work logs
@@ -90,7 +103,7 @@ export default async function WorkLogViewPage({ params }: { params: Promise<{ wo
           </nav>
         </div>
 
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0">
             <p className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.12em] text-text-muted">
               <time dateTime={format(date, "yyyy-MM-dd")}>{format(date, customTitle ? "EEEE, d MMMM yyyy" : "yyyy")}</time>
@@ -98,9 +111,9 @@ export default async function WorkLogViewPage({ params }: { params: Promise<{ wo
                 <DayIcon className="size-3.5" aria-hidden="true" />{DAY_LABEL[data.dayType]}
               </span>
             </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-[-0.03em] text-text lg:text-4xl">{customTitle ?? format(date, "EEEE, d MMMM")}</h1>
-            <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-muted">
-              <span className="wl-solid grid size-7 place-items-center rounded-full bg-surface text-2xs font-bold text-accent-text" aria-hidden="true">{initials}</span>
+            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.02em] text-text">{customTitle ?? format(date, "EEEE, d MMMM")}</h1>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-text-muted">
+              <span className="wl-solid grid size-6 place-items-center rounded-full bg-surface text-2xs font-bold text-accent-text" aria-hidden="true">{initials}</span>
               <span className="font-medium text-text">{displayName}</span>
               <span aria-hidden="true">·</span>
               <span>Last edited <time dateTime={updatedAt.toISOString()}>{format(updatedAt, "d MMM yyyy, h:mm a")}</time></span>
@@ -115,18 +128,19 @@ export default async function WorkLogViewPage({ params }: { params: Promise<{ wo
         </div>
       </header>
 
-      {/* Stats */}
-      {isWork ? (
-        <dl className={cn("grid grid-cols-2 gap-3 lg:gap-4", ticketsEnabled && "lg:grid-cols-4")}>
-          {ticketsEnabled ? <Stat label="Tickets worked" value={tickets.length} /> : null}
-          <Stat label="Meetings noted" value={meetingsNoted} of={meetings.length} />
-          {ticketsEnabled ? <Stat label="Projects" text={projects.length ? projects.join(", ") : "—"} /> : null}
-          <Stat label="Attachments" value={attachments.length} />
-        </dl>
-      ) : null}
-
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-6">
         <div className="flex min-w-0 flex-col gap-5">
+          <WorkLogSummary
+            workLogId={data.id}
+            // Summaries without a model were built by code before AI-only (2026-10-02); not shown.
+            summary={data.summaryModel ? data.summary : null}
+            model={data.summaryModel}
+            generatedAt={data.summaryModel && data.summaryGeneratedAt ? new Date(data.summaryGeneratedAt).toISOString() : null}
+            updatedAt={updatedAt.toISOString()}
+            hasContent={isWork && Boolean(learning || meetingsNoted || (ticketsEnabled && tickets.length))}
+            aiOn={ai.keySource !== null}
+          />
+
           {!isWork ? (
             <section className="wl-card wl-off flex flex-col items-start gap-2 p-6 md:p-8">
               <span className="grid size-11 place-items-center rounded-xl bg-sidebar text-sidebar-fg" aria-hidden="true"><DayIcon className="size-5" /></span>
@@ -182,13 +196,16 @@ export default async function WorkLogViewPage({ params }: { params: Promise<{ wo
                 </ol>
               </Card>
 
-              <Card id="learning-heading" title="Learning & upskilling">
+              <Card id="learning-heading" title="Work done">
                 <div className="px-4 py-4 md:px-6">
                   {learning ? <MarkdownContent value={data.learningNotes} className="text-text" /> : <p className="text-sm text-text-muted">Nothing added for this day.</p>}
                 </div>
               </Card>
             </>
           )}
+
+          {/* From the Tracker: what was ticked off, and what was still overdue, on this day. */}
+          <DayTodos date={dayIso} todos={dayTodos} />
         </div>
 
         <aside aria-label="Log details" className="flex min-w-0 flex-col gap-5">
@@ -232,7 +249,7 @@ export default async function WorkLogViewPage({ params }: { params: Promise<{ wo
 /** ‹ / › to the neighbouring log's read-only view; dimmed when there is none. */
 function AdjacentLink({ log, direction }: { log: { id: string; date: Date } | null; direction: "previous" | "next" }) {
   const Icon = direction === "previous" ? ChevronLeft : ChevronRight;
-  const box = "grid size-10 place-items-center rounded-xl border bg-surface transition-colors duration-150";
+  const box = "grid size-9 place-items-center rounded-xl border bg-surface transition-colors duration-150";
   if (!log) return <span className={cn(box, "border-border text-text-subtle opacity-50")} aria-hidden="true"><Icon className="size-4" /></span>;
   const label = format(new Date(log.date), "EEEE d MMMM");
   return (
@@ -242,21 +259,9 @@ function AdjacentLink({ log, direction }: { log: { id: string; date: Date } | nu
   );
 }
 
-function Stat({ label, value, of, text }: { label: string; value?: number; of?: number; text?: string }) {
-  return (
-    <div className="wl-card flex min-w-0 flex-col gap-1.5 px-4 py-4 md:px-5">
-      <dt className="text-sm text-text-muted">{label}</dt>
-      <dd className={cn("min-w-0 font-semibold text-text", text ? "truncate text-base leading-8" : "text-3xl leading-none tabular-nums")} title={text}>
-        {text ?? value}
-        {of !== undefined ? <span className="ml-1 text-base font-medium text-text-muted">of {of}</span> : null}
-      </dd>
-    </div>
-  );
-}
-
 function Card({ id, title, count, children }: { id: string; title: string; count?: number | string; children: ReactNode }) {
   return (
-    <section aria-labelledby={id} className="wl-card overflow-hidden">
+    <section aria-labelledby={id} data-reveal className="wl-card overflow-hidden">
       <h2 id={id} className="flex items-center gap-2 border-b border-border px-4 py-4 text-lg font-semibold tracking-[-0.015em] text-text md:px-6">
         {title}
         {count !== undefined ? <span className="rounded-full bg-surface-3 px-2 py-0.5 text-xs font-semibold text-accent-text tabular-nums">{count}</span> : null}

@@ -59,14 +59,20 @@ enum TaskStatus {
 
 /// How you actually told them. Kept coarse on purpose — this is for recall
 /// ("I said it on Slack"), not for integration.
-enum FollowUpChannel {
-  Slack
-  Email
-  Call
-  Meeting
-  Teams
-  InPerson
-  Other
+/// Lists the user can edit on the Profile page. One `UserList` row per kind.
+enum UserListKind {
+  /// Follow-up "Where" options (was the FollowUpChannel enum).
+  FollowUpChannel
+  /// Resource types (was the ResourceType enum).
+  ResourceType
+  /// Meeting cards every new work log starts with.
+  DefaultMeeting
+  /// Project / site suggestions on tickets.
+  Project
+  /// Note tags kept as suggestions before they are used.
+  NoteTag
+  /// Resource tags kept as suggestions before they are used.
+  ResourceTag
 }
 
 enum FollowUpStatus {
@@ -77,25 +83,19 @@ enum FollowUpStatus {
 /// What a tracker entry IS. All three share one table because they share one
 /// spine: a subject, an optional date, and an append-only record of what
 /// happened. Only the required fields and the wording differ per kind.
+/// (`Idea` was folded into `Note` on 2026-10-01 — they were the same thing.)
+/// Achievements (/achievements).
+enum AchievementStatus {
+  InProgress
+  Completed
+}
+
 enum EntryKind {
   FollowUp
   Task
   Note
-  Idea
 }
 
-enum ResourceType {
-  Website
-  App
-  Link
-  Documentation
-  Command
-  Snippet
-  Reference
-  Tool
-  Learning
-  Other
-}
 
 // ---------------------------------------------------------------------------
 // Auth (NextAuth v5 + @auth/prisma-adapter)
@@ -114,6 +114,12 @@ model User {
   sprintLengthDays Int       @default(14)
   /// Profile: track tickets inside work logs (and show the Tickets page).
   ticketsEnabled   Boolean   @default(true)
+  /// Profile: the user's OpenRouter API key, AES-256-GCM encrypted (lib/secret-box.ts). Never sent to the client.
+  openRouterKeyEnc  String?
+  /// Last 4 characters of that key, so Profile can show which one is saved.
+  openRouterKeyHint String?
+  /// Profile: comma-separated OpenRouter model ids (null = OPENROUTER_MODEL env / `openrouter/free`).
+  openRouterModel   String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -129,7 +135,11 @@ model User {
   links                Link[]
   resources            Resource[]
   followUps            FollowUp[]
+  lists                UserList[]
+  achievements         Achievement[]
+  achievementFiles     AchievementFile[]
   followUpUpdates      FollowUpUpdate[]
+  sprintReports        SprintReport[]
 
   @@index([email])
 }
@@ -184,6 +194,13 @@ model WorkLog {
   dayType       DayType  @default(Work)
   /// Learning / upskilling notes for the day (Markdown). Independent of tickets.
   learningNotes String   @default("") @db.Text
+  /// AI-written summary of the log (Markdown, via OpenRouter). AI only since 2026-10-02;
+  /// rows without `summaryModel` are older code-built ones and are hidden.
+  summary            String?   @db.Text
+  /// When `summary` was last generated; older than `updatedAt` means it's out of date.
+  summaryGeneratedAt DateTime?
+  /// OpenRouter model that wrote `summary`; null = an older code-built summary (not shown).
+  summaryModel       String?
   /// Stored as a UTC-midnight DateTime. One primary log per user per date.
   date          DateTime @db.Date
   createdAt     DateTime @default(now())
@@ -335,6 +352,8 @@ model FollowUp {
   status      FollowUpStatus @default(Open)
   /// Flagged as important — shown in its own group at the top of the Tracker.
   pinned      Boolean        @default(false)
+  /// Lowercase labels for grouping and searching. Used by Notes; empty elsewhere.
+  tags        String[]       @default([])
   /// When the next nudge is due. Null = logged for the record, no date attached.
   dueDate     DateTime?      @db.Date
   completedAt DateTime?
@@ -359,10 +378,15 @@ model FollowUpUpdate {
   followUpId String
   userId     String
   note       String          @db.Text
-  channel    FollowUpChannel @default(Slack)
+  /// Free text from the user's channel list (Profile). Was an enum until 2026-10-01.
+  channel    String          @default("Slack")
   /// When the conversation happened. Defaults to now, can be backdated for
   /// something you are recording after the fact.
   occurredAt DateTime        @default(now())
+  /// True when this row records THEIR reply rather than something you said.
+  /// A follow-up whose newest row is from them is "replied"; otherwise it is
+  /// still waiting on them. Derived, so there is no status to drift.
+  fromThem   Boolean         @default(false)
   createdAt  DateTime        @default(now())
 
   followUp FollowUp @relation(fields: [followUpId], references: [id], onDelete: Cascade)
@@ -486,7 +510,8 @@ model Resource {
   userId      String
   title       String
   description String       @default("") @db.Text
-  type        ResourceType @default(Other)
+  /// Free text from the user's resource-type list (Profile). Was an enum until 2026-10-01.
+  type        String       @default("Other")
   url         String?
   content     String       @default("") @db.Text
   tags        String[]     @default([])
@@ -501,4 +526,84 @@ model Resource {
   @@index([userId, favorite])
   @@index([userId, type])
   @@index([userId, createdAt])
+}
+
+/// One editable list per user and kind (Profile → Dropdown lists / Tags).
+/// No row = the built-in defaults (`lib/user-lists.ts`); a row, even empty, wins.
+model UserList {
+  userId    String
+  kind      UserListKind
+  /// In display order. For Project / NoteTag / ResourceTag: names added ahead of use.
+  values    String[]     @default([])
+  /// Project only: names still used on tickets that should no longer be suggested.
+  hidden    String[]     @default([])
+  /// ResourceType only: value → picked icon as "library:Name" (e.g. "si:SiGithub").
+  /// Missing = the icon is guessed from the name.
+  icons     Json         @default("{}")
+  updatedAt DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, kind])
+}
+
+/// Something you earned — a certification, award, course. /achievements.
+model Achievement {
+  id          String            @id @default(cuid())
+  userId      String
+  title       String
+  /// Free text: Certification, Course, Award… (suggestions live in the form).
+  type        String            @default("Certification")
+  status      AchievementStatus @default(Completed)
+  /// Who set it as a goal, if anyone (e.g. a manager).
+  assignedBy  String?
+  /// Plain calendar days, like WorkLog.date.
+  startDate   DateTime?         @db.Date
+  endDate     DateTime?         @db.Date
+  description String            @default("") @db.Text
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user  User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  files AchievementFile[]
+
+  @@index([userId])
+  @@index([userId, endDate])
+}
+
+/// A certificate or other proof, stored in Postgres like WorkLogAttachment
+/// (≤10 MB). `data` is only ever read by the download route.
+model AchievementFile {
+  id            String   @id @default(cuid())
+  achievementId String
+  userId        String
+  name          String
+  mimeType      String
+  size          Int
+  data          Bytes
+  createdAt     DateTime @default(now())
+
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([achievementId])
+  @@index([userId])
+}
+
+/// Reports page: one generated "5-15 Report" per user per sprint (Markdown).
+/// Regenerating replaces it; the user copies it into their own doc.
+model SprintReport {
+  id          String   @id @default(cuid())
+  userId      String
+  /// First day of the sprint (lib/sprint.ts), as a UTC-midnight calendar day like WorkLog.date.
+  sprintStart DateTime @db.Date
+  content     String   @db.Text
+  /// OpenRouter model that wrote it; null = an older code-built report (not shown).
+  model       String?
+  generatedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sprintStart])
+  @@index([userId])
 }

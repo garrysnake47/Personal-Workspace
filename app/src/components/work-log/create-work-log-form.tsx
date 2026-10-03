@@ -105,54 +105,47 @@ export function CreateWorkLogForm({
   }
 
   return (
-    <section id="create-work-log" aria-labelledby="create-work-log-heading" className="wl-card motion-page-enter scroll-mt-20 grid overflow-hidden md:grid-cols-[17rem_minmax(0,1fr)] lg:grid-cols-[19rem_minmax(0,1fr)]">
-      {/* Navy "today" panel — same recipe as the editor's header. */}
-      <div className="wl-hero flex flex-col justify-center gap-3 p-6 md:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-text-muted">Today</p>
-        <p className="flex items-center gap-4">
-          <span className="text-7xl font-bold leading-none tracking-[-0.05em] text-text tabular-nums">{today.day}</span>
-          <span className="flex flex-col">
-            <span className="text-2xl font-semibold tracking-[-0.02em] text-text">{today.weekday}</span>
-            <span className="text-sm font-medium text-text-muted">{today.monthYear}</span>
+    // Compact on purpose: header row + one row of fields on wide screens, so the
+    // form and the sprint timeline below it fit in a single viewport.
+    <section id="create-work-log" aria-labelledby="create-work-log-heading" className="wl-card motion-page-enter scroll-mt-20 flex min-w-0 flex-col gap-4 p-4 md:p-5">
+      <div className="flex items-center gap-3">
+        {/* Today, as a small navy date badge (was a full-height panel). */}
+        <span className="wl-hero flex h-12 shrink-0 items-center gap-2.5 rounded-xl px-3">
+          <span className="text-3xl leading-none font-bold tracking-[-0.04em] text-text tabular-nums">{today.day}</span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-sm font-semibold text-text">{today.weekday}</span>
+            <span className="text-xs text-text-muted">{today.monthYear}</span>
           </span>
-        </p>
+        </span>
+        <div className="min-w-0">
+          <h2 id="create-work-log-heading" className="flex items-center gap-2 text-lg font-semibold tracking-[-0.015em] text-text">
+            <CalendarPlus className="size-4 text-accent-text" aria-hidden="true" />
+            Create a work log
+          </h2>
+          <p className="text-sm text-text-muted">Pick a weekday. Log a work day, or mark it as a holiday or leave.</p>
+        </div>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-5 p-5 md:p-6">
-        <div className="flex items-start gap-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary-subtle text-accent-text">
-            <CalendarPlus className="size-4" aria-hidden="true" />
-          </span>
-          <div>
-            <h2 id="create-work-log-heading" className="text-lg font-semibold tracking-[-0.015em] text-text">Create a work log</h2>
-            <p className="text-sm text-text-muted">Pick a weekday. Log a work day, or mark it as a holiday or leave.</p>
-          </div>
+      <div className="grid gap-3 md:grid-cols-[11rem_minmax(0,1fr)] xl:grid-cols-[11rem_auto_minmax(0,1fr)_auto] xl:items-end">
+        <Field label="Date" htmlFor="new-work-log-date" required>
+          <Input id="new-work-log-date" type="date" max={todayKey()} value={date} aria-invalid={error ? true : undefined} aria-describedby="new-work-log-date-help" onChange={(event) => { setDate(event.target.value); setError(undefined); }} />
+        </Field>
+        <div className="flex min-w-0 flex-col gap-2">
+          <span id="new-work-log-day-type-label" className="text-sm font-semibold text-text">Day type</span>
+          <DayTypeToggle name="new-work-log-day-type" labelledBy="new-work-log-day-type-label" value={dayType} onChange={setDayType} />
         </div>
+        <Field label="Title" htmlFor="new-work-log-title" className="min-w-0 md:col-span-2 xl:col-span-1">
+          <Input id="new-work-log-title" value={title} placeholder={TITLE_PLACEHOLDER[dayType]} onChange={(event) => setTitle(event.target.value)} />
+        </Field>
+        <Button className="whitespace-nowrap md:col-span-2 xl:col-span-1" onClick={create} loading={pending} disabled={future || (weekend && !existingLog)}>
+          {dayType !== "Work" ? `Mark ${DAY_LABEL[dayType].toLowerCase()}` : existingLog ? "Open log" : "Create log"}
+          <ArrowRight aria-hidden="true" />
+        </Button>
+      </div>
 
-        <div className="grid gap-4 lg:grid-cols-[12rem_minmax(0,1fr)] lg:items-end">
-          <Field label="Date" htmlFor="new-work-log-date" required>
-            <Input id="new-work-log-date" type="date" max={todayKey()} value={date} aria-invalid={error ? true : undefined} aria-describedby="new-work-log-date-help" onChange={(event) => { setDate(event.target.value); setError(undefined); }} />
-          </Field>
-          <div className="flex min-w-0 flex-col gap-2">
-            <span id="new-work-log-day-type-label" className="text-sm font-semibold text-text">Day type</span>
-            <DayTypeToggle name="new-work-log-day-type" labelledBy="new-work-log-day-type-label" value={dayType} onChange={setDayType} />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <Field label="Title" htmlFor="new-work-log-title" className="min-w-0">
-            <Input id="new-work-log-title" value={title} placeholder={TITLE_PLACEHOLDER[dayType]} onChange={(event) => setTitle(event.target.value)} />
-          </Field>
-          <Button className="w-full whitespace-nowrap" onClick={create} loading={pending} disabled={future || (weekend && !existingLog)}>
-            {dayType !== "Work" ? `Mark ${DAY_LABEL[dayType].toLowerCase()}` : existingLog ? "Open log" : "Create log"}
-            <ArrowRight aria-hidden="true" />
-          </Button>
-        </div>
-
-        <div className="border-t border-border pt-3">
-          <p id="new-work-log-date-help" className="text-xs text-text-subtle">Weekdays up to today — future dates can&apos;t be logged. Existing dates open the saved log.</p>
-          {error ? <p className="mt-2 text-sm text-danger" role="alert">{error}</p> : null}
-        </div>
+      <div>
+        <p id="new-work-log-date-help" className="text-xs text-text-subtle">Weekdays up to today — future dates can&apos;t be logged. Existing dates open the saved log.</p>
+        {error ? <p className="mt-2 text-sm text-danger" role="alert">{error}</p> : null}
       </div>
     </section>
   );

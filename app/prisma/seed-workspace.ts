@@ -17,7 +17,6 @@ import { generateJSON } from "@tiptap/html/server";
 
 import { buildNoteExtensions } from "../src/components/notes/editor-extensions";
 import { PrismaClient } from "../src/generated/prisma/client";
-import type { ResourceType } from "../src/generated/prisma/enums";
 
 const DEFAULT_EMAIL = "tariboi36@gmail.com";
 
@@ -452,7 +451,7 @@ const RETIRED_RESOURCE_TITLES = [
   "MDN — Closures", "MDN — Using promises", "Git reference", "Can I use", "Regex101", "Tailwind CSS docs", "Slack", "Sprint board",
 ];
 
-type SeedResource = { title: string; description: string; type: ResourceType; url?: string; content?: string; tags: string[] };
+type SeedResource = { title: string; description: string; type: string; url?: string; content?: string; tags: string[] };
 
 const RESOURCES: SeedResource[] = [
   // AI

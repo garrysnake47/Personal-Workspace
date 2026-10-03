@@ -606,6 +606,8 @@ export function RichTextEditor({
       buildNoteExtensions({
         placeholder,
         codeBlockNodeView: ReactNodeViewRenderer(CodeBlock),
+        // the editor sits under the form's h2s — page headings start at h3
+        headingOffset: 2,
       }),
     [placeholder],
   );

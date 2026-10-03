@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { differenceInCalendarDays, format } from "date-fns";
 
+import { listTodosForDay } from "@/actions/follow-ups";
 import { getAdjacentWorkLogs, getWorkLog } from "@/actions/worklog";
 import { requireUserId } from "@/lib/session";
 import { getUserSettings } from "@/lib/user-settings";
@@ -42,5 +43,16 @@ export default async function EditWorkLogPage({ params }: { params: Promise<{ wo
   const toNav = (log: { id: string; date: Date } | null | undefined) => (log ? { id: log.id, label: format(log.date, "EEEE d MMMM") } : null);
   const adjacent = adjacentResult.ok ? { previous: toNav(adjacentResult.data.previous), next: toNav(adjacentResult.data.next) } : { previous: null, next: null };
 
-  return <WorkLogEditor workLog={workLog} relative={relative} adjacent={adjacent} ticketsEnabled={settings.ticketsEnabled} />;
+  // WorkLog.date is UTC midnight, so its ISO prefix is the calendar day.
+  const dayIso = workLog.date.toISOString().slice(0, 10);
+  const todosResult = await listTodosForDay({ date: dayIso });
+  const todos = todosResult.ok
+    ? todosResult.data.map((todo) => ({
+        ...todo,
+        dueDate: todo.dueDate ? todo.dueDate.toISOString().slice(0, 10) : null,
+        completedAt: todo.completedAt?.toISOString() ?? null,
+      }))
+    : [];
+
+  return <WorkLogEditor workLog={workLog} relative={relative} adjacent={adjacent} ticketsEnabled={settings.ticketsEnabled} dayTodos={{ date: dayIso, todos }} />;
 }

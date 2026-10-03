@@ -52,8 +52,12 @@ const BRAND_COLORS: Record<string, string> = {
   SiJira: "#0052CC",
 };
 
-/** For icons without a brand: calm, distinct hues that read well as tints. */
-const FALLBACK_COLORS = ["#6366F1", "#0D9488", "#D97706", "#E11D48", "#7C3AED", "#0284C7", "#059669", "#EA580C"];
+/**
+ * For icons without a brand: deepened homepage hues (blue / pink / orange / ink),
+ * so only real brand logos bring outside colour onto the page. Was a rainbow
+ * until 2026-10-01. All clear 4.5:1 on white as icon colours.
+ */
+const FALLBACK_COLORS = ["#4562c9", "#b8395f", "#9a560f", "#3a52a8", "#2a2c3f"]; // homepage hues, deepened (no purple)
 
 export function noteAccent(iconName: string | null | undefined, id: string) {
   if (iconName && BRAND_COLORS[iconName]) return BRAND_COLORS[iconName];
