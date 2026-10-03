@@ -83,14 +83,6 @@ async function assertTicketOwned(userId: string, ticketId: string) {
 // Lookup
 // ---------------------------------------------------------------------------
 
-/** Find by the human key, scoped to the user. `ticketKey` must be normalised. */
-export async function findTicketByKey(userId: string, ticketKey: string) {
-  const ticket = await prisma.ticket.findUnique({
-    where: { userId_ticketId: { userId, ticketId: ticketKey } },
-  });
-  return ticket ? normalizeTicketRecord(ticket) : null;
-}
-
 /**
  * The ticket-search box calls this. Returns the ticket with its recent
  * history, or null so the caller can offer inline creation.
@@ -541,27 +533,6 @@ export async function deleteTicket(userId: string, ticketId: string) {
 }
 
 /** Dashboard card: the active workflow states. */
-/**
- * Distinct project / site names already used on this user's tickets, for the
- * project autocomplete. Case-insensitive de-dupe keeps the first spelling.
- */
-export async function listProjectNames(userId: string) {
-  const rows = await prisma.ticket.findMany({
-    where: { userId, projectName: { not: null } },
-    select: { projectName: true },
-    distinct: ["projectName"],
-    orderBy: { projectName: "asc" },
-  });
-  const seen = new Set<string>();
-  const names: string[] = [];
-  for (const { projectName } of rows) {
-    const name = projectName?.trim();
-    if (!name || seen.has(name.toLowerCase())) continue;
-    seen.add(name.toLowerCase());
-    names.push(name);
-  }
-  return names;
-}
 
 export async function listActiveTickets(userId: string, take = 10) {
   const tickets = await prisma.ticket.findMany({

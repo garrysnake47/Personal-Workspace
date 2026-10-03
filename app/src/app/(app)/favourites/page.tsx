@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { ExternalLink, FileText, Lightbulb, ListTodo, MessageSquare, SquareTerminal, Star, StickyNote } from "lucide-react";
+import { ExternalLink, FileText, ListTodo, MessageSquare, SquareTerminal, Star, StickyNote } from "lucide-react";
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -12,10 +12,9 @@ import { requireUserId } from "@/lib/session";
 export const metadata = { title: "Favourites" };
 
 const KIND = {
-  FollowUp: { label: "Follow-up", Icon: MessageSquare },
-  Task: { label: "Task", Icon: ListTodo },
-  Note: { label: "Note", Icon: StickyNote },
-  Idea: { label: "Idea", Icon: Lightbulb },
+  FollowUp: { label: "Follow-up", Icon: MessageSquare, href: "/tracker?view=followups" },
+  Task: { label: "To-do", Icon: ListTodo, href: "/tracker" },
+  Note: { label: "Note", Icon: StickyNote, href: "/tracker?view=notes" },
 } as const;
 
 /** Everything you've starred, in one place: notes, resources, and important tracker items. */
@@ -44,16 +43,26 @@ export default async function FavouritesPage() {
     <div className="flex min-w-0 flex-col gap-8">
       <PageHeader title="Favourites" description="Everything you've starred — notes, resources and important tracker items — in one place." className="mb-0" />
 
-      <nav aria-label="Jump to" className="-mt-2 flex flex-wrap gap-2">
+      {/* Navy summary band — the page's dark anchor (like Work Logs' "today" panel).
+          Each count jumps to its section. */}
+      <nav aria-label="Jump to" className="-mt-2 grid overflow-hidden rounded-2xl bg-sidebar text-sidebar-fg shadow-sm md:grid-cols-3">
         {[
-          { href: "#fav-notes", label: "Notes", count: notes.length, Icon: FileText },
-          { href: "#fav-resources", label: "Resources", count: resources.length, Icon: ExternalLink },
-          { href: "#fav-tracker", label: "Important", count: tracker.length, Icon: Star },
-        ].map(({ href, label, count, Icon }) => (
-          <a key={href} href={href} className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-surface px-3.5 text-sm font-semibold text-text transition-colors duration-150 hover:border-border-strong hover:bg-surface-2">
-            <Icon className="size-4 text-accent-text" aria-hidden="true" />
-            {label}
-            <span className="text-xs font-medium text-text-subtle tabular-nums">{count}</span>
+          { href: "#fav-notes", label: "Favourite notes", count: notes.length, Icon: FileText },
+          { href: "#fav-resources", label: "Favourite resources", count: resources.length, Icon: ExternalLink },
+          { href: "#fav-tracker", label: "Important in Tracker", count: tracker.length, Icon: Star },
+        ].map(({ href, label, count, Icon }, index) => (
+          <a
+            key={href}
+            href={href}
+            className={`flex items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-sidebar-2 ${index > 0 ? "border-t border-sidebar-border md:border-t-0 md:border-l" : ""}`}
+          >
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-sidebar-accent-bg" aria-hidden="true">
+              <Icon className={`size-5 ${Icon === Star ? "fill-current" : ""}`} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-3xl leading-none font-semibold tabular-nums">{count}</span>
+              <span className="mt-1 block text-sm text-sidebar-muted">{label}</span>
+            </span>
           </a>
         ))}
       </nav>
@@ -67,7 +76,7 @@ export default async function FavouritesPage() {
       ) : null}
 
       <Group id="fav-notes" title="Notes" count={notes.length} empty="Star a note on the Notes page to pin it here.">
-        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul data-reveal-stagger className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {notes.map((note) => {
             const accent = noteAccent(note.iconName, note.id);
             return (
@@ -97,7 +106,7 @@ export default async function FavouritesPage() {
       </Group>
 
       <Group id="fav-resources" title="Resources" count={resources.length} empty="Star a resource on the Resources page to pin it here.">
-        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul data-reveal-stagger className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {resources.map((resource) => {
             const code = resource.type === "Command" || resource.type === "Snippet";
             const Inner = (
@@ -133,12 +142,12 @@ export default async function FavouritesPage() {
       </Group>
 
       <Group id="fav-tracker" title="Important in Tracker" count={tracker.length} empty="Mark a tracker item important to pin it here.">
-        <ul className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <ul data-reveal-stagger className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {tracker.map((entry) => {
             const kind = KIND[entry.kind];
             return (
               <li key={entry.id}>
-                <Link href="/tracker" className="wl-card flex h-full items-start gap-3 p-4 transition-[border-color,box-shadow] duration-150 hover:border-primary hover:shadow-md">
+                <Link href={kind.href} className="wl-card flex h-full items-start gap-3 p-4 transition-[border-color,box-shadow] duration-150 hover:border-primary hover:shadow-md">
                   <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-surface-2 text-accent-text" aria-hidden="true"><kind.Icon className="size-5" /></span>
                   <span className="min-w-0">
                     <span className="flex items-center gap-1.5 text-base font-semibold text-text">
@@ -164,7 +173,7 @@ export default async function FavouritesPage() {
 function Group({ id, title, count, empty, children }: { id: string; title: string; count: number; empty: string; children: ReactNode }) {
   return (
     <section id={id} aria-labelledby={`${id}-heading`} className="scroll-mt-24">
-      <h2 id={`${id}-heading`} className="mb-3 flex items-center gap-2 text-lg font-semibold tracking-[-0.015em] text-text">
+      <h2 id={`${id}-heading`} className="mb-3 flex items-center gap-2 text-xl font-semibold tracking-[-0.015em] text-text">
         {title}
         <span className="text-sm font-medium text-text-subtle tabular-nums">{count}</span>
       </h2>

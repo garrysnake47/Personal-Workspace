@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 
-import { PortfolioHome } from "@/components/portfolio/portfolio-home";
+import { HomePage } from "@/components/home/home-page";
 
-import "../banner/banner.css";
+import "../brand-art.css";
+import "./home.css";
 
 export const metadata: Metadata = {
-  title: { absolute: "WorkNest — Your focused workspace" },
-  description: "WorkNest keeps work logs, notes, resources, and ideas in one focused place.",
+  title: { absolute: "WorkNest — Keep it all in one place" },
+  description: "Work logs, to-dos, notes and resources in one quiet workspace, with AI summaries of your days and 5-15 reports for your sprints.",
 };
 
-export default function HomePage() {
-  return <PortfolioHome />;
+export default function Page() {
+  return <HomePage />;
 }

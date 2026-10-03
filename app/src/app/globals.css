@@ -151,86 +151,114 @@
   --blur-medium: 3px;         /* text reveal */
 }
 
-/* The nav pill is dark in BOTH themes, so it must not inherit the page's focus
-   ring: the light ring (#0f766e) lands at 2.69:1 on an active nav item. Scoping
-   the bright teal ring to the pill clears 3:1 in either theme (SC 1.4.11). */
-#app-nav {
+/* Navigation sits on navy chrome, so links need a white focus ring. */
+#app-nav,
+#app-mobile-menu {
   --c-ring: var(--c-sidebar-accent);
   --c-ring-offset: var(--c-sidebar);
 }
 
-/* Authenticated workspace palette (user-supplied, 2026-09-24):
-     #3c6e71 teal · #284b63 navy · #353535 charcoal — plus their shades only.
-   Page is white. Cards are white with a teal-shade border by default; a tinted
-   fill (`bg-card-tint` teal / `bg-card-navy`) is used only where a card needs
-   emphasis. No neutral grey fills. Scoped to the app shell so the
-   marketing homepage and auth pages keep their own look. */
+/* Workspace palette = the homepage palette (2026-10-03; replaced charcoal/teal/navy).
+   Accent is the homepage BLUE (user rejected purple the same day).
+   Base: ink #2a2c3f, muted #575c72, page #f3f5f9, white cards, and the homepage tones —
+   purple #9b5cf0, blue #7d9cf4, pink #f58ea8, orange #f8aa4b, red #ec6f6f. The light tones
+   can't carry text, so text/fills use deeper shades of the same hues, all ≥4.5:1 on white:
+   blue #4562c9 (5.5) / #3d57b6 (6.5) / #33499a (8.2),
+   pink #b8395f (5.5), red #c43e3e (5.1), orange #9a560f (5.7). Tints are 10% hue on white. */
 .app-shell {
   color-scheme: light;
-  --c-overlay: rgba(40, 75, 99, 0.55);   /* navy scrim */
-  --c-bg: #ffffff;
+  --c-overlay: rgba(42, 44, 63, 0.55);   /* ink scrim */
+  --c-bg: #f3f5f9;              /* homepage page colour */
   --c-surface: #ffffff;         /* inputs, menus, items nested in cards */
-  --c-surface-2: #f1f6f6;       /* teal ~6% — toolbars, insets, hover */
-  --c-surface-3: #dfebec;       /* teal ~15% — pressed */
+  --c-surface-2: #eef0f6;       /* toolbars, insets, hover */
+  --c-surface-3: #e4e6ef;       /* pressed / selected */
   --c-card: #ffffff;            /* default card fill */
-  --c-card-tint: #e9f1f1;       /* teal ~10% — emphasis cards only */
-  --c-card-navy: #e7edf2;       /* navy ~10% — emphasis cards only */
-  --c-text: #353535;            /* charcoal, 12.2:1 */
-  --c-text-muted: #414141;      /* charcoal shade, 10.2:1 — descriptions */
-  --c-text-subtle: #555555;     /* charcoal shade, 7.5:1 — sublabels, hints */
+  --c-card-tint: #f2f5fe;       /* blue 10% — emphasis cards only */
+  --c-card-navy: #eef1fb;       /* softer blue — emphasis cards only */
+  --c-text: #2a2c3f;            /* homepage ink, 13.7:1 */
+  --c-text-muted: #575c72;      /* homepage muted, 6.6:1 */
+  --c-text-subtle: #62677d;     /* 5.6:1 — sublabels, hints */
   --c-text-inverse: #ffffff;
-  --c-border: #8fb1b4;          /* teal ~55% — card edges, dividers (clearly visible) */
-  --c-border-strong: #5f8587;   /* control edges, 4.2:1 */
-  --c-primary: #3c6e71;         /* 5.6:1 on white */
-  --c-primary-strong: #284b63;
-  --c-primary-hover: #325c5f;
-  --c-primary-active: #284b63;
+  --c-border: #dcdfe8;          /* homepage hairline — decorative edges, dividers */
+  --c-border-strong: #8b90a3;   /* functional control edges, 3.2:1 */
+  --c-primary: #4562c9;         /* blue — fills, icons, accents (white 5.5:1) */
+  --c-primary-strong: #3d57b6;  /* links, small labels */
+  --c-primary-hover: #3d57b6;
+  --c-primary-active: #33499a;
   --c-primary-fg: #ffffff;
-  --c-primary-subtle: #d3e3e4;  /* selected state — reads against the card tint */
-  --c-accent-text: #284b63;     /* 9.1:1 */
-  --c-ring: #3c6e71;
+  --c-primary-subtle: #e3e9fc;  /* selected state */
+  --c-accent-text: #3d57b6;     /* 6.5:1 */
+  --c-ring: #5f7de6;            /* homepage blue, a step deeper for 3:1 */
   --c-ring-offset: var(--c-bg);
-  /* Neutral status/priority chips were slate — retint to navy. */
-  --c-status-open: #284b63;
-  --c-status-open-bg: #e3ebf1;
-  --c-status-open-fg: #284b63;
-  --c-status-closed: #284b63;
-  --c-status-closed-bg: #e3ebf1;
-  --c-status-closed-fg: #284b63;
-  --c-priority-low: #284b63;
-  --c-priority-low-bg: #e3ebf1;
-  --c-sidebar: #284b63;         /* primary buttons, theme toggle, dark chrome */
-  --c-sidebar-2: #213f53;
-  --c-sidebar-3: #1a3343;
+  --c-danger: #c43e3e;          /* homepage red, deepened */
+  --c-danger-fg: #ffffff;
+  --c-danger-subtle: #fdf1f1;
+  --c-warning: #9a560f;         /* homepage orange, deepened */
+  --c-warning-fg: #ffffff;
+  --c-warning-subtle: #fef5e9;
+  --c-info: #4562c9;            /* homepage blue, deepened */
+  --c-info-fg: #ffffff;
+  --c-info-subtle: #f2f5fe;
+  /* success stays green — the homepage has no green and "done" must still read as done */
+  /* Ticket workflow: every stage is a light tint + soft ring + dark label, one homepage hue
+     per stage (user decision 2026-10-03 — no solid badges): In progress blue, Sent to QA
+     orange, Ready for production pink, Released muted ink, Done green. Labels 6.2–8.8:1. */
+  --c-status-open: #8b90a3;
+  --c-status-open-bg: #eef0f5;
+  --c-status-open-fg: #3d4156;
+  --c-status-progress: #4562c9;      /* blue — In progress */
+  --c-status-progress-bg: #f2f5fe;
+  --c-status-progress-fg: #3a52a8;
+  --c-status-testing: #f8aa4b;       /* orange — Sent to QA */
+  --c-status-testing-bg: #fef5e9;
+  --c-status-testing-fg: #8a4d0d;
+  --c-status-waiting: #f58ea8;       /* pink — Ready for production */
+  --c-status-waiting-bg: #fef4f6;
+  --c-status-waiting-fg: #a3324f;
+  --c-status-closed: #8b90a3;        /* muted ink — Released */
+  --c-status-closed-bg: #eef0f5;
+  --c-status-closed-fg: #3d4156;
+  --c-status-completed: #3fa66a;     /* green — Done */
+  --c-status-completed-bg: #ebf6ef;
+  --c-status-completed-fg: #166534;
+  --c-status-blocked: #c43e3e;
+  --c-status-blocked-bg: #fdf1f1;
+  --c-status-blocked-fg: #b23535;
+  --c-priority-low: #575c72;
+  --c-priority-low-bg: #eceef4;
+  --c-priority-medium: #4562c9;
+  --c-priority-medium-bg: #f2f5fe;
+  --c-priority-high: #9a560f;
+  --c-priority-high-bg: #fef5e9;
+  --c-priority-urgent: #b8395f;
+  --c-priority-urgent-bg: #fef4f6;
+  --c-sidebar: #2a2c3f;         /* ink chrome — primary buttons, dark hero (homepage pills) */
+  --c-sidebar-2: #34374d;
+  --c-sidebar-3: #3e4159;
   --c-sidebar-fg: #ffffff;
-  --c-sidebar-muted: #d2dde5;
-  --c-sidebar-subtle: #a9bccb;
+  --c-sidebar-muted: #d6d7e3;
+  --c-sidebar-subtle: #a7a9bd;
   --c-sidebar-border: rgba(255, 255, 255, 0.18);
   --c-sidebar-accent: #ffffff;
   --c-sidebar-accent-bg: rgba(255, 255, 255, 0.16);
-  /* Tracker tones ("Productivity Tool" palette: teal focus + action
-     orange). One saturated hue per group / type; tints are mixed from it so
-     header, tile, badge and chip always agree. All ≥4.5:1 with white text. */
-  --c-tk-overdue: #dc2626;
-  --c-tk-today: #0f766e;
-  --c-tk-upcoming: #4f46e5;
-  --c-tk-undated: #0369a1;
-  --c-tk-notes: #b45309;
-  --c-tk-done: #15803d;
-  --c-tk-followup: #1d4ed8;
-  --c-tk-task: #0e7490;
-  --c-tk-note: #b45309;
-  --c-tk-idea: #7c3aed;
+  /* Tracker tones — one homepage hue per group, deepened for white text (≥4.5:1). */
+  --c-tk-overdue: #c43e3e;      /* red */
+  --c-tk-today: #4562c9;        /* blue */
+  --c-tk-upcoming: #9a560f;     /* orange */
+  --c-tk-undated: #62677d;      /* muted ink — Someday */
+  --c-tk-done: #4562c9;
+  --c-tk-waiting: #9a560f;      /* follow-up: no reply yet (orange) */
+  --c-tk-replied: #b8395f;      /* follow-up: they replied, your turn (pink) */
   --c-tk-on: #ffffff;
-  --sh-card: 0 1px 2px rgba(40, 75, 99, 0.05), 0 6px 20px -10px rgba(40, 75, 99, 0.16);
-  --sh-card-hover: 0 1px 2px rgba(40, 75, 99, 0.06), 0 16px 34px -14px rgba(40, 75, 99, 0.28);
-  --sh-button: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1px 2px rgba(26, 51, 67, 0.22), 0 6px 14px -8px rgba(40, 75, 99, 0.55);
-  --sh-md: 0 10px 28px -10px rgba(40, 75, 99, 0.26), 0 2px 6px -2px rgba(40, 75, 99, 0.10);
-  --sh-lg: 0 24px 56px -16px rgba(26, 51, 67, 0.32), 0 6px 14px -6px rgba(40, 75, 99, 0.12);
+  --sh-card: 0 1px 2px rgba(42, 44, 63, 0.05), 0 6px 20px -10px rgba(42, 44, 63, 0.16);
+  --sh-card-hover: 0 1px 2px rgba(42, 44, 63, 0.06), 0 16px 34px -14px rgba(42, 44, 63, 0.28);
+  --sh-button: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1px 2px rgba(28, 30, 47, 0.22), 0 6px 14px -8px rgba(42, 44, 63, 0.55);
+  --sh-md: 0 10px 28px -10px rgba(42, 44, 63, 0.26), 0 2px 6px -2px rgba(42, 44, 63, 0.10);
+  --sh-lg: 0 24px 56px -16px rgba(28, 30, 47, 0.32), 0 6px 14px -6px rgba(42, 44, 63, 0.12);
 }
 
-/* The body behind the shell (overscroll bounce) stays white too. */
-html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
+/* The body behind the shell (overscroll bounce) matches the page colour. */
+html:not(.dark) body:has(.app-shell) { --c-bg: #f3f5f9; }
 
 /* Dark: navy-based, not grey. */
 .dark .app-shell {
@@ -276,15 +304,12 @@ html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
   --c-sidebar-accent: #ffffff;
   --c-sidebar-accent-bg: rgba(255, 255, 255, 0.16);
   --c-tk-overdue: #f87171;
-  --c-tk-today: #2dd4bf;
-  --c-tk-upcoming: #a5b4fc;
-  --c-tk-undated: #7dd3fc;
-  --c-tk-notes: #fbbf24;
-  --c-tk-done: #4ade80;
-  --c-tk-followup: #93c5fd;
-  --c-tk-task: #67e8f9;
-  --c-tk-note: #fbbf24;
-  --c-tk-idea: #c4b5fd;
+  --c-tk-today: #8fd3d6;
+  --c-tk-upcoming: #a9cde0;
+  --c-tk-undated: #a9bccb;
+  --c-tk-done: #8fd3d6;
+  --c-tk-waiting: #a9cde0;
+  --c-tk-replied: #8fd3d6;
   --c-tk-on: #0e1a22;
 }
 
@@ -349,39 +374,39 @@ html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 .wl-hero .wl-solid {
-  --c-text: #353535;
-  --c-text-muted: #414141;
-  --c-text-subtle: #555555;
-  --c-accent-text: #284b63;
+  --c-text: #2a2c3f;
+  --c-text-muted: #575c72;
+  --c-text-subtle: #62677d;
+  --c-accent-text: #3d57b6;
   --c-surface: #ffffff;
-  --c-surface-2: #eaf2f2;
-  --c-surface-3: #dfebec;
+  --c-surface-2: #eef0f6;
+  --c-surface-3: #e4e6ef;
   --c-border: #ffffff;
   --c-border-strong: #ffffff;
-  --c-primary: #3c6e71;
+  --c-primary: #4562c9;
   --c-success: #15803d;
-  --c-warning: #b45309;
-  --c-danger: #dc2626;
-  --c-ring: #9fd0d3;
+  --c-warning: #9a560f;
+  --c-danger: #c43e3e;
+  --c-ring: #a9bcf7;
   color: var(--c-text);
 }
 .wl-hero .wl-field {
-  --c-text: #353535;
-  --c-text-muted: #414141;
-  --c-text-subtle: #555555;
-  --c-accent-text: #284b63;
+  --c-text: #2a2c3f;
+  --c-text-muted: #575c72;
+  --c-text-subtle: #62677d;
+  --c-accent-text: #3d57b6;
   --c-surface: #ffffff;
-  --c-primary: #3c6e71;
+  --c-primary: #4562c9;
   background: #ffffff;
   border: 1px solid #ffffff;
   border-radius: 0.625rem;
-  box-shadow: inset 0 1px 2px rgba(40, 75, 99, 0.18);
+  box-shadow: inset 0 1px 2px rgba(42, 44, 63, 0.18);
   transition: box-shadow 150ms ease, border-color 150ms ease;
 }
-.wl-hero .wl-field:hover { border-color: #9fd0d3; }
+.wl-hero .wl-field:hover { border-color: #a9bcf7; }
 .wl-hero .wl-field:focus-within {
-  border-color: #3c6e71;
-  box-shadow: 0 0 0 3px rgba(159, 208, 211, 0.75);
+  border-color: #4562c9;
+  box-shadow: 0 0 0 3px rgba(169, 188, 247, 0.75);
 }
 /* The field's own teal ring is the focus indicator; drop the inner input's
    global outline, which rendered as a white box inside the field. */
@@ -584,80 +609,6 @@ html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
 /* `inline` so the var() indirection resolves at use-site and .dark overrides
    actually take effect on generated utilities. */
 
-/* ===================== FORCED LIGHT (marketing pages) =====================
-   The reference design (optlify.vercel.app) is light-only. Marketing routes
-   opt out of the dark theme by re-declaring the light raw tokens on a subtree,
-   so they render light even when <html> carries .dark. Pure CSS - no flash,
-   no effect hook. The app shell keeps its light/dark toggle.               */
-.force-light {
-  color-scheme: light;
-  --c-bg: #f8fafc;
-  --c-surface: #ffffff;
-  --c-surface-2: #f1f5f9;
-  --c-surface-3: #e2e8f0;
-  --c-overlay: rgba(15, 23, 42, 0.52);
-  --c-text: #0f172a;
-  --c-text-muted: #475569;
-  --c-text-subtle: #64748b;
-  --c-text-inverse: #ffffff;
-  --c-border: #e2e8f0;        /* dividers, card outlines (decorative) */
-  --c-border-strong: #64748b; /* functional edges: inputs, checkboxes, toggles */
-  --c-primary: #0d9488;
-  --c-primary-strong: #0f766e; /* text-size teal: links, small labels (5.3:1 on white) */
-  --c-primary-hover: #0f766e;
-  --c-primary-active: #115e59;
-  --c-primary-fg: #ffffff;
-  --c-primary-subtle: #ccfbf1;
-  --c-accent-text: #0f766e;
-  --c-danger: #dc2626;
-  --c-danger-fg: #ffffff;
-  --c-danger-subtle: #fde9e9;
-  --c-success: #15803d;
-  --c-success-fg: #ffffff;
-  --c-success-subtle: #dff4e4;
-  --c-warning: #b45309;
-  --c-warning-fg: #ffffff;
-  --c-warning-subtle: #fdf0d8;
-  --c-info: #1d4ed8;
-  --c-info-fg: #ffffff;
-  --c-info-subtle: #dbeafe;
-  --c-ring: #0f766e;
-  --c-ring-offset: var(--c-bg);
-  --c-status-open: #475569;
-  --c-status-open-bg: #f1f5f9;
-  --c-status-open-fg: #475569;
-  --c-status-progress: #2563eb;
-  --c-status-progress-bg: #e6eefe;
-  --c-status-progress-fg: #1d4ed8;
-  --c-status-blocked: #b91c1c;
-  --c-status-blocked-bg: #fde9e9;
-  --c-status-blocked-fg: #b91c1c;
-  --c-status-waiting: #92400e;
-  --c-status-waiting-bg: #fdf0d8;
-  --c-status-waiting-fg: #92400e;
-  --c-status-testing: #6d28d9;
-  --c-status-testing-bg: #f0e9fe;
-  --c-status-testing-fg: #6d28d9;
-  --c-status-completed: #166534;
-  --c-status-completed-bg: #dff4e4;
-  --c-status-completed-fg: #166534;
-  --c-status-closed: #57534e;
-  --c-status-closed-bg: #edeae7;
-  --c-status-closed-fg: #57534e;
-  --c-priority-low: #475569;
-  --c-priority-low-bg: #f1f5f9;
-  --c-priority-medium: #0369a1;
-  --c-priority-medium-bg: #e4f2fb;
-  --c-priority-high: #c2410c;
-  --c-priority-high-bg: #fdeee4;
-  --c-priority-urgent: #be123c;
-  --c-priority-urgent-bg: #fde8ed;
-  --sh-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --sh-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.06);
-  --sh-md: 0 4px 12px -2px rgba(15, 23, 42, 0.10), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
-  --sh-lg: 0 12px 32px -8px rgba(15, 23, 42, 0.18), 0 4px 8px -4px rgba(15, 23, 42, 0.08);
-}
-
 @theme inline {
   /* ---- Colors ---- */
   --color-bg: var(--c-bg);
@@ -745,12 +696,9 @@ html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
   --color-tk-today: var(--c-tk-today);
   --color-tk-upcoming: var(--c-tk-upcoming);
   --color-tk-undated: var(--c-tk-undated);
-  --color-tk-notes: var(--c-tk-notes);
   --color-tk-done: var(--c-tk-done);
-  --color-tk-followup: var(--c-tk-followup);
-  --color-tk-task: var(--c-tk-task);
-  --color-tk-note: var(--c-tk-note);
-  --color-tk-idea: var(--c-tk-idea);
+  --color-tk-waiting: var(--c-tk-waiting);
+  --color-tk-replied: var(--c-tk-replied);
   --color-tk-on: var(--c-tk-on);
 
   /* ---- Fonts ----
@@ -837,7 +785,6 @@ html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
   --motion-reveal: 350ms;
   --motion-reveal-exit: 180ms;
   --motion-section: 400ms;
-  --motion-stagger: 40ms;
   --motion-reveal-y: 0.75rem;
   --motion-reveal-scale: 0.97;
 }
@@ -927,25 +874,6 @@ html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
   animation: app-reveal-up var(--motion-reveal) var(--ease-out-quick) both;
 }
 
-.motion-stagger {
-  animation: app-reveal-up var(--motion-reveal) var(--ease-out-quick) both;
-  animation-delay: calc(var(--motion-index, 0) * var(--motion-stagger));
-}
-
-.motion-lift {
-  transition:
-    transform var(--motion-state) var(--ease-standard),
-    border-color var(--motion-state) var(--ease-standard),
-    background-color var(--motion-state) var(--ease-standard),
-    box-shadow var(--motion-state) var(--ease-standard);
-}
-
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .motion-lift:hover {
-    transform: translate3d(0, -2px, 0);
-  }
-}
-
 .motion-disclosure-content {
   animation: app-reveal-up var(--motion-state) var(--ease-out-quick) both;
 }
@@ -995,7 +923,7 @@ html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
 /* Inside the signed-in app, scroll-driven reveals are OFF. Content must never
    sit half-faded waiting for a scroll (it hid note sections and cards below the
    fold once the page, not <main>, became the scroll container). The one-shot
-   page-enter fade stays; the marketing pages keep their scroll effects. */
+   page-enter fade stays. */
 .app-shell .scroll-reveal,
 .app-shell .scroll-reveal-item {
   animation: none;
@@ -1006,218 +934,10 @@ html:not(.dark) body:has(.app-shell) { --c-bg: #ffffff; }
 
 @media (prefers-reduced-motion: reduce) {
   .motion-page-enter,
-  .motion-stagger,
   .motion-disclosure-content,
   .scroll-reveal,
   .scroll-reveal-item {
     animation: none;
-  }
-
-  .motion-lift,
-  .motion-lift:hover {
-    transform: none;
-  }
-}
-
-/* Homepage-only native document scrolling: exactly three snap targets. */
-html:has(.marketing-document) {
-  scroll-behavior: smooth;
-  scroll-snap-type: y mandatory;
-  scroll-padding-top: 0;
-}
-
-body:has(.marketing-document) {
-  overscroll-behavior-y: none;
-}
-
-.marketing-snap-section {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
-}
-
-.marketing-nav-link {
-  transition:
-    color var(--motion-fast) var(--ease-standard),
-    transform var(--motion-fast) var(--ease-standard);
-}
-
-.marketing-nav-link::after {
-  position: absolute;
-  right: 0.25rem;
-  bottom: 0.25rem;
-  left: 0.25rem;
-  height: 2px;
-  border-radius: var(--radius-xs);
-  background: var(--c-primary);
-  content: "";
-  transform: scaleX(0);
-  transform-origin: center;
-  transition: transform var(--motion-state) var(--ease-standard);
-}
-
-.marketing-nav-link[data-active="true"] {
-  color: var(--c-primary-strong);
-}
-
-.marketing-nav-link[data-active="true"]::after {
-  transform: scaleX(1);
-}
-
-@keyframes marketing-menu-in {
-  from { opacity: 0; transform: translate3d(0, -0.75rem, 0) scale(0.98); }
-  to { opacity: 1; transform: none; }
-}
-
-.marketing-mobile-menu {
-  animation: marketing-menu-in var(--motion-state) var(--ease-out-quick) both;
-  transform-origin: top center;
-}
-
-/* ==========================================================================
-   MARKETING MOTION LAYER — public pages only, additive.
-   Used by app/(marketing)/** and components/marketing/**. Nothing here
-   changes an existing token value.
-
-   Durations and easings follow a hover / scroll-reveal / stagger scale,
-   with GSAP-style eases written as CSS cubic-bezier equivalents.
-
-   HARD RULES (design.md §7 + motion.csv performance notes):
-     - transform + opacity ONLY. Never width/height/top/left.
-     - Content is visible by default. A scoped IntersectionObserver arms and
-       toggles reveal state only after it is ready, so no-JS remains readable.
-   ========================================================================== */
-
-@theme {
-  /* GSAP ease -> CSS cubic-bezier. New tokens; nothing overridden. */
-  --ease-power1-out: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* gsap power1.out */
-  --ease-power2-out: cubic-bezier(0.215, 0.61, 0.355, 1); /* gsap power2.out */
-  --ease-expo-out: cubic-bezier(0.19, 1, 0.22, 1); /* gsap expo.out */
-
-  /* One display step above --text-8xl, for the redesigned hero only. */
-  --text-9xl: 4.5rem; /* 72 — marketing hero at xl */
-  --text-9xl--line-height: 0.98;
-}
-
-/* ------------------------------- SCROLL REVEAL ---------------------------- */
-/* Reveal states replay on viewport entry after RevealController arms them.
-   The unarmed baseline has no opacity/transform rule and is therefore the
-   fully visible, resilient no-JS state. */
-
-@media (prefers-reduced-motion: no-preference) {
-  .marketing-document[data-motion-ready] [data-reveal],
-  .marketing-document[data-motion-ready] [data-word-rise] > span {
-    opacity: 0;
-    transform: translate3d(0, var(--reveal-y, 0.75rem), 0)
-      scale(var(--reveal-scale, 1));
-    transition:
-      opacity 180ms var(--ease-standard),
-      transform 180ms var(--ease-standard);
-  }
-
-  .marketing-document[data-motion-ready] [data-reveal][data-in-view] {
-    opacity: 1;
-    transform: none;
-    transition-duration: var(--motion-reveal);
-    transition-timing-function: var(--ease-power1-out);
-    transition-delay: var(--reveal-delay, 0ms);
-  }
-
-  /* motion.csv row 4 — Subtle: 300-400ms, power1.out, y 8-16px
-     ("reads as a fade, not a slide"). Section eyebrows and leads. */
-  [data-reveal="fade"] {
-    --reveal-y: 0.75rem;
-  }
-
-  /* Image/card entrances get slight depth without exceeding the 12px offset. */
-  [data-reveal="pop"] {
-    --reveal-y: 0.75rem;
-    --reveal-scale: 0.97;
-  }
-}
-
-/* ----------------------------- BACKGROUND LAYER --------------------------- */
-/* Static composited shapes replace animated blur, which was expensive during
-   snap scrolling. The grid and arcs add depth without repainting each frame. */
-.pw-orb {
-  position: absolute;
-  border-radius: 50%;
-  opacity: 0.28;
-}
-
-/* Ruled-paper dot grid. Masked so it fades out rather than ending in a line. */
-.pw-grid {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(
-    circle at 1px 1px,
-    color-mix(in srgb, var(--c-primary) 26%, transparent) 1px,
-    transparent 0
-  );
-  background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse 80% 60% at 50% 35%, #000 20%, transparent 75%);
-}
-
-.pw-grid-soft {
-  opacity: 0.35;
-  mask-image: linear-gradient(to bottom, transparent, #000 35%, transparent);
-}
-
-.pw-arc {
-  position: absolute;
-  width: 18rem;
-  aspect-ratio: 1;
-  border: 1px solid color-mix(in srgb, var(--c-primary) 28%, transparent);
-  border-radius: 50%;
-}
-
-.pw-arc-a { top: 18%; right: 4%; }
-.pw-arc-b { top: 24%; right: 9%; width: 12rem; }
-.pw-arc-c { bottom: -5rem; left: -4rem; width: 22rem; }
-.pw-arc-d { top: 16%; right: -6rem; width: 24rem; }
-
-/* ------------------------- HERO HEADLINE WORD RISE ------------------------ */
-/* motion.csv row 9 — Stagger List / Complex: expo.out, 400-700ms.
-   Deliberate deviation: the row splits by CHARACTER at 0.015s. We split by
-   WORD at 0.05s instead — same effect, ~7 nodes instead of ~60, and the
-   headline stays selectable and readable to assistive tech. Row 9's "Don't"
-   ("don't split-animate long paragraphs; reserve for short headlines under
-   ~8 words") is respected: this is used on the h1 only. */
-@media (prefers-reduced-motion: no-preference) {
-  .marketing-document[data-motion-ready] [data-word-rise][data-in-view] > span {
-    opacity: 1;
-    transform: none;
-    transition-duration: var(--motion-reveal);
-    transition-timing-function: var(--ease-expo-out);
-    transition-delay: var(--word-delay, 0ms);
-  }
-}
-
-/* --------------------------- REDUCED MOTION RESET ------------------------- */
-/* If a user flips the OS setting mid-session, force final readable states. */
-@media (prefers-reduced-motion: reduce) {
-  html:has(.marketing-document) { scroll-behavior: auto !important; }
-
-  .marketing-mobile-menu {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  .marketing-nav-link,
-  .marketing-nav-link::after {
-    transition: none !important;
-  }
-
-  [data-reveal] {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  [data-word-rise] > span {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
   }
 
 }
@@ -1236,15 +956,18 @@ body:has(.marketing-document) {
 
 
 .note-prose {
+  /* Long-form reading size from the app scale (text-md, 15px). Everything
+     inside is sized from tokens too, so a page's own headings always sit
+     BELOW the reader's topic title (text-3xl) — never compete with it. */
   color: var(--c-text);
-  font-size: 15.5px;
-  line-height: 1.7;
+  font-size: var(--text-md);
+  line-height: 1.75;
   overflow-wrap: anywhere;
 }
 
 /* Prose keeps a comfortable reading measure; code blocks and tables use the
    full width of their page. */
-.note-prose > :where(p, ul, ol, blockquote, h1, h2, h3, h4, hr) {
+.note-prose > :where(p, ul, ol, blockquote, h1, h2, h3, h4, h5, h6, hr) {
   max-width: 80ch;
 }
 
@@ -1259,44 +982,54 @@ body:has(.marketing-document) {
 
 /* headings ---------------------------------------------------------------- */
 
-.note-prose h1,
-.note-prose h2,
-.note-prose h3 {
+.note-prose :where(h1, h2, h3, h4, h5, h6) {
   color: var(--c-text);
-  font-weight: 650;
-  letter-spacing: -0.018em;
-  line-height: 1.25;
-  scroll-margin-top: 80px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.3;
+  scroll-margin-top: 8rem;
 }
 
-.note-prose h1 {
-  font-size: 1.72em;
+/* Reader: section 24→30 › topic 20→24 › level 1: 18 › level 2: 16 › level 3: 15 bold › body 15.
+   Sized by the heading's LEVEL (data-level), not its tag: the tag is shifted down
+   to nest under the surrounding page (reader: h4–h6, editor: h3–h5). */
+.note-prose :where(h1, [data-level="1"]) {
+  font-size: var(--text-xl);
 }
 
-.note-prose h2 {
-  font-size: 1.34em;
+.note-prose :where(h2, [data-level="2"]) {
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
 }
 
-.note-prose h3 {
-  font-size: 1.12em;
+.note-prose :where(h3, h4, h5, h6, [data-level="3"]) {
+  font-size: var(--text-md);
+  letter-spacing: 0;
 }
 
-.note-prose > h1 + *,
-.note-prose > h2 + *,
-.note-prose > h3 + * {
+/* data-level wins over a tag rule above when both match (an h4 that is level 1). */
+.note-prose [data-level="1"] { font-size: var(--text-xl); letter-spacing: -0.015em; }
+.note-prose [data-level="2"] { font-size: var(--text-lg); letter-spacing: -0.01em; }
+.note-prose [data-level="3"] { font-size: var(--text-md); letter-spacing: 0; }
+
+/* inline code inside a heading keeps the heading's size, not code's 0.88em */
+.note-prose :where(h1, h2, h3, h4, h5, h6) code {
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.note-prose > :where(h1, h2, h3, h4, h5, h6) + * {
   margin-top: 0.5em;
 }
 
-.note-prose > * + h1,
-.note-prose > * + h2,
-.note-prose > * + h3 {
-  margin-top: 1.6em;
+.note-prose > * + :where(h1, h2, h3, h4, h5, h6) {
+  margin-top: 1.75em;
 }
 
 /* inline ------------------------------------------------------------------ */
 
 .note-prose strong {
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .note-prose a {
@@ -1322,9 +1055,10 @@ body:has(.marketing-document) {
   background-color: var(--c-surface-2);
   border: 1px solid var(--c-border);
   border-radius: 5px;
-  padding: 0.12em 0.36em;
-  font-size: 0.88em;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  padding: 0.1em 0.35em;
+  font-size: 0.875em;
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
 }
 
 /* lists ------------------------------------------------------------------- */
@@ -1441,8 +1175,9 @@ body:has(.marketing-document) {
   border-radius: 12px;
   padding: 1rem 1.1rem;
   overflow-x: auto;
-  font-size: 13.5px;
-  line-height: 1.65;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  line-height: 1.7;
   tab-size: 2;
   color: var(--code-fg);
 }
@@ -1560,7 +1295,7 @@ body:has(.marketing-document) {
   table-layout: fixed;
   width: 100%;
   min-width: 480px;
-  font-size: 14.5px;
+  font-size: var(--text-base);
 }
 
 .note-prose th,
@@ -1639,297 +1374,28 @@ body:has(.marketing-document) {
 }
 
 /* ==========================================================================
-   MARKETING WORLD — "The Commit Graph"
-   Public pages only (`.marketing-document`).
-
-   The world is version-control history as a graphic system: a continuous
-   commit spine, diff-gutter marks, tabular ids and dates. It deliberately
-   refuses GitHub's skin — the ink ground carries a violet cast, the addition
-   accent is a plotter lime rather than a signal green, and the deletion red
-   appears exactly ONCE on the page, struck through, to show the one thing this
-   product will not do.
-
-   Implemented by REDEFINING the `--c-*` raw tokens on the marketing wrapper,
-   so every existing token utility (`bg-bg`, `text-text`, `bg-primary`, …)
-   renders the new world inside it and the authenticated app is untouched.
-   ========================================================================== */
-
-.marketing-document {
-  color-scheme: light;
-
-  /* Paper-and-ink rendition. Cool paper with a violet cast — not cream. */
-  --c-bg: #f3f2f6;
-  --c-surface: #ffffff;
-  --c-surface-2: #e9e7ef;
-  --c-surface-3: #ddd9e6;
-
-  --c-text: #14121c;
-  --c-text-muted: #55506a;   /* 6.87:1 on paper — measured */
-  --c-text-subtle: #6b6683;  /* 4.89:1 on paper — measured */
-  --c-text-inverse: #f7f6fa;
-
-  --c-border: #d8d4e3;
-  --c-border-strong: #6b6683;
-
-  /* Addition is the only accent that carries weight. Lime reads as a plotter
-     ink, not a status green; the text-weight value is darkened to clear AA. */
-  --c-primary: #79c23c;
-  --c-primary-strong: #45731a;  /* 5.06:1 on paper, measured — links and small labels */
-  --c-primary-hover: #3f6a14;
-  --c-primary-active: #35590f;
-  --c-primary-fg: #12160b;
-  --c-primary-subtle: #e7f5d8;
-  --c-accent-text: #3f6a14;
-
-  --c-ring: #4a7c18;
-  --c-ring-offset: var(--c-bg);
-
-  /* World-specific. Branch ramp for the spine; deletion is used once. */
-  --m-spine: #bcb6cf;
-  --m-node: #14121c;
-  --m-branch-a: #4a7c18;
-  --m-branch-b: #7b4bc4;
-  --m-branch-c: #b7761a;
-  --m-del: #c62828;
-  --m-gutter-add-bg: #e7f5d8;
-
-  font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-}
-
-.dark .marketing-document {
-  color-scheme: dark;
-
-  /* Ink ground with a violet cast, drenched. The scene is a developer at the
-     end of a working block with an editor already open; that room is dark. */
-  --c-bg: #13111c;
-  --c-surface: #1b1827;
-  --c-surface-2: #221e31;
-  --c-surface-3: #2c2740;
-
-  --c-text: #efecf5;
-  --c-text-muted: #a8a2bc;   /* 7.4:1 on ink */
-  --c-text-subtle: #8b849f;  /* 4.9:1 on ink */
-  --c-text-inverse: #13111c;
-
-  --c-border: #322c45;
-  --c-border-strong: #6d6584;
-
-  --c-primary: #9be564;
-  --c-primary-strong: #9be564;
-  --c-primary-hover: #aeef7e;
-  --c-primary-active: #c2f79b;
-  --c-primary-fg: #12160b;
-  --c-primary-subtle: #24331a;
-  --c-accent-text: #b6ef8a;
-
-  --c-ring: #9be564;
-
-  --m-spine: #473f63;
-  --m-node: #efecf5;
-  --m-branch-a: #9be564;
-  --m-branch-b: #c792ea;
-  --m-branch-c: #ffb454;
-  --m-del: #ff6b6b;
-  --m-gutter-add-bg: #1f2d15;
-}
-
-/* The new homepage is a continuous scroll, not three snap targets. */
-html:has(.marketing-document) {
-  scroll-snap-type: none;
-}
-
-/* ---- Type ---------------------------------------------------------------
-   Display is a grotesque with character, never the monospace: mono as a
-   costume for "technical" is a refusal. Martian Mono is confined to actual
-   data — commit ids, dates, counts — where tabular figures do real work. */
-
-.marketing-document .m-display {
-  font-family: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 0.96;
-  text-wrap: balance;
-}
-
-.marketing-document .m-data {
-  font-family: var(--font-martian-mono), ui-monospace, monospace;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: "calt" 0;
-  letter-spacing: -0.02em;
-}
-
-/* ---- Browser surfaces ---------------------------------------------------
-   The parts not drawn by hand still carry the design: selection, caret,
-   scrollbar, focus ring and underline offset all ship with defaults that
-   belong to no design system. */
-
-.marketing-document ::selection {
-  background: var(--c-primary);
-  color: var(--c-primary-fg);
-}
-
-.marketing-document {
-  caret-color: var(--c-primary-strong);
-  scrollbar-color: var(--m-spine) transparent;
-  scrollbar-width: thin;
-}
-
-.marketing-document ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-.marketing-document ::-webkit-scrollbar-thumb {
-  border: 3px solid transparent;
-  border-radius: 999px;
-  background: var(--m-spine);
-  background-clip: content-box;
-}
-
-.marketing-document ::-webkit-scrollbar-thumb:hover {
-  background: var(--c-border-strong);
-  background-clip: content-box;
-}
-
-.marketing-document :focus-visible {
-  outline: 2px solid var(--c-ring);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-.marketing-document a:not([class*="no-underline"]):hover {
-  text-underline-offset: 0.25em;
-  text-decoration-thickness: 1px;
-}
-
-/* ---- The authored moment ------------------------------------------------
-   ONE moment, not an entrance on every section: the spine draws itself as the
-   page is read. Everything else is already visible. The stroke length is set
-   from JS-free CSS via pathLength="1" on the path. */
-
-@media (prefers-reduced-motion: no-preference) {
-  /* The straight rail draws in LAYOUT space — no dash arithmetic. A dash
-     pattern cannot survive `non-scaling-stroke`, which measures it in screen
-     pixels and so ignores pathLength entirely. */
-  .m-spine-draw {
-    transform: scaleY(0);
-    transform-origin: top center;
-    animation: m-draw-rail linear both;
-    animation-timeline: view();
-    /* Complete as the segment finishes entering, so a section is never read
-       with a half-drawn spine beside it. */
-    animation-range: entry 0% entry 100%;
-  }
-
-  /* The merge curve is a real curve at a fixed 1:1 size, so pathLength
-     normalization does reach its dash array. */
-  .m-spine-path {
-    stroke-dasharray: 100;
-    stroke-dashoffset: 100;
-    animation: m-draw linear both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 100%;
-  }
-
-  .m-node-pop {
-    scale: 0.4;
-    opacity: 0;
-    animation: m-node-in 420ms cubic-bezier(0.19, 1, 0.22, 1) both;
-    animation-timeline: view();
-    animation-range: entry 10% entry 90%;
-  }
-}
-
-@keyframes m-draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes m-draw-rail {
-  to {
-    transform: scaleY(1);
-  }
-}
-
-@keyframes m-node-in {
-  to {
-    scale: 1;
-    opacity: 1;
-  }
-}
-
-/* The strike in the amend attempt — the page's only use of the deletion
-   colour, and it resolves rather than persisting. */
-.marketing-document .m-strike::after {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  height: 2px;
-  width: 100%;
-  background: var(--m-del);
-  content: "";
-  transform-origin: left center;
-  animation: m-strike-through 620ms cubic-bezier(0.19, 1, 0.22, 1) forwards;
-}
-
-@keyframes m-strike-through {
-  0% {
-    transform: scaleX(0);
-    opacity: 1;
-  }
-  55% {
-    transform: scaleX(1);
-    opacity: 1;
-  }
-  100% {
-    transform: scaleX(1);
-    opacity: 0;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .marketing-document .m-strike::after {
-    animation: none;
-    opacity: 0;
-  }
-}
-
-/* ==========================================================================
    2026-09-28 refresh — depth, glass chrome and motion.
    Every value reads a token; every animation has a reduced-motion guard.
    ========================================================================== */
 
-/* Frosted sticky header: content scrolls under a translucent white bar. */
+/* White header in the homepage palette (2026-10-03): ink text, muted labels, blue
+   active underline (no fill behind the active tab) and a hairline border. The chrome tokens are re-pointed only inside the
+   header, so ink primary buttons elsewhere are unchanged. Contrast on white: fg 13.7:1,
+   muted 6.6:1, accent 5.9:1. */
 .app-shell .app-header {
-  background: color-mix(in srgb, var(--c-bg) 78%, transparent);
-  -webkit-backdrop-filter: saturate(1.6) blur(16px);
-  backdrop-filter: saturate(1.6) blur(16px);
-  border-bottom-color: color-mix(in srgb, var(--c-border) 55%, transparent);
+  --c-sidebar: #ffffff;
+  --c-sidebar-2: #f3f5f9;        /* hover — homepage page colour */
+  --c-sidebar-3: #ebedf2;        /* pressed */
+  --c-sidebar-fg: #2a2c3f;       /* ink */
+  --c-sidebar-muted: #575c72;    /* muted — idle section labels */
+  --c-sidebar-subtle: #b9bccb;   /* hover underline, menu button edge */
+  --c-sidebar-border: #dcdfe8;
+  --c-sidebar-accent: #4562c9;   /* blue — active underline + icon */
+  --c-sidebar-accent-bg: transparent; /* no tint behind the active tab (user decision) */
+  background: var(--c-sidebar);
+  border-bottom-color: var(--c-border);
 }
 .app-shell #app-nav { background: transparent; }
-
-/* Nav: the active section is a soft pill that slides between items
-   (tabs sliding). Width + x are written by app-nav.tsx. */
-.t-nav-pill {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  height: 2.5rem;
-  width: 0;
-  translate: 0 -50%;
-  border-radius: 999px;
-  background: var(--c-card-tint);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-primary) 22%, transparent);
-  opacity: 0;
-  transition:
-    transform var(--duration-fast) var(--ease-smooth-out),
-    width var(--duration-fast) var(--ease-smooth-out),
-    opacity var(--duration-quick) ease-out;
-  pointer-events: none;
-  z-index: 0;
-}
-.t-nav-pill[data-ready="true"] { opacity: 1; }
 
 /* Menu dropdown : grows from its trigger corner. */
 .t-dropdown {
@@ -1987,18 +1453,188 @@ dialog.t-modal[open]::backdrop {
   animation: t-reveal-line var(--duration-slow) var(--ease-smooth-out) both;
 }
 
-/* Interactive cards lift a touch and deepen their shadow on hover. */
-.motion-lift { box-shadow: var(--sh-card); }
-@media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .motion-lift:hover { box-shadow: var(--sh-card-hover); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .t-nav-pill,
   .t-dropdown,
   dialog.t-modal[open],
   dialog.t-modal[open]::backdrop,
   .t-sheet { transition: none !important; }
   .t-reveal > *,
   .motion-page-enter { animation: none !important; }
+}
+
+/* ==========================================================================
+   Icon colours (2026-10-01) — every Lucide icon in the workspace gets its own
+   colour by MEANING, instead of the site's teal/navy. Lucide stamps each SVG
+   with `lucide-<name>`, so this one map covers every icon with no component
+   changes. Dates & messages blue · tickets & boards violet · notes amber ·
+   done & add green · delete & alerts red · edit orange · people cyan · links
+   indigo · tags pink · search & view teal · structural glyphs slate.
+   All ≥ 4.2:1 on white and on surface-2 (WCAG graphics minimum is 3:1).
+   Icons that set their own colour inline (tag icons, brand logos) keep it.
+   2026-10-03: values remapped to the homepage hues (deepened) — the token names are
+   kept; green/cyan/violet/teal resolve to blue, indigo to deep blue (no purple — user decision).
+   ========================================================================== */
+.app-shell {
+  --c-ic-blue: #4562c9;
+  --c-ic-violet: #4562c9;
+  --c-ic-amber: #9a560f;
+  --c-ic-green: #4562c9;
+  --c-ic-red: #c43e3e;
+  --c-ic-orange: #b8661a;
+  --c-ic-cyan: #4562c9;
+  --c-ic-indigo: #3a52a8;
+  --c-ic-pink: #b8395f;
+  --c-ic-teal: #4562c9;
+  --c-ic-slate: #575c72;
+}
+.app-shell svg.lucide-calendar-days,
+.app-shell svg.lucide-calendar-plus,
+.app-shell svg.lucide-calendar-range,
+.app-shell svg.lucide-clock-3,
+.app-shell svg.lucide-history,
+.app-shell svg.lucide-hourglass,
+.app-shell svg.lucide-mail,
+.app-shell svg.lucide-send,
+.app-shell svg.lucide-message-square,
+.app-shell svg.lucide-messages-square,
+.app-shell svg.lucide-message-square-reply { color: var(--c-ic-blue); }
+.app-shell svg.lucide-ticket,
+.app-shell svg.lucide-ticket-plus,
+.app-shell svg.lucide-folder-kanban,
+.app-shell svg.lucide-layout-dashboard,
+.app-shell svg.lucide-columns-3,
+.app-shell svg.lucide-rows-3,
+.app-shell svg.lucide-table,
+.app-shell svg.lucide-square-stack,
+.app-shell svg.lucide-square-terminal { color: var(--c-ic-violet); }
+.app-shell svg.lucide-file-text,
+.app-shell svg.lucide-notebook-pen,
+.app-shell svg.lucide-sticky-note,
+.app-shell svg.lucide-book-open,
+.app-shell svg.lucide-book-open-text,
+.app-shell svg.lucide-lightbulb,
+.app-shell svg.lucide-star,
+.app-shell svg.lucide-sun { color: var(--c-ic-amber); }
+.app-shell svg.lucide-check,
+.app-shell svg.lucide-circle-check,
+.app-shell svg.lucide-list-checks,
+.app-shell svg.lucide-list-todo,
+.app-shell svg.lucide-clipboard-check,
+.app-shell svg.lucide-shield-check,
+.app-shell svg.lucide-plus,
+.app-shell svg.lucide-upload-cloud { color: var(--c-ic-green); }
+.app-shell svg.lucide-trash-2,
+.app-shell svg.lucide-circle-alert,
+.app-shell svg.lucide-log-out,
+.app-shell svg.lucide-eraser { color: var(--c-ic-red); }
+.app-shell svg.lucide-pencil,
+.app-shell svg.lucide-pencil-line,
+.app-shell svg.lucide-highlighter,
+.app-shell svg.lucide-wrench,
+.app-shell svg.lucide-briefcase { color: var(--c-ic-orange); }
+.app-shell svg.lucide-user,
+.app-shell svg.lucide-user-round,
+.app-shell svg.lucide-users,
+.app-shell svg.lucide-building-2,
+.app-shell svg.lucide-plane,
+.app-shell svg.lucide-globe { color: var(--c-ic-cyan); }
+.app-shell svg.lucide-library-big,
+.app-shell svg.lucide-link-2,
+.app-shell svg.lucide-link-2-off,
+.app-shell svg.lucide-external-link,
+.app-shell svg.lucide-app-window,
+.app-shell svg.lucide-graduation-cap,
+.app-shell svg.lucide-paperclip,
+.app-shell svg.lucide-image-plus,
+.app-shell svg.lucide-file-chart-column,
+.app-shell svg.lucide-file-bar-chart,
+.app-shell svg.lucide-file-code-2,
+.app-shell svg.lucide-code,
+.app-shell svg.lucide-braces { color: var(--c-ic-indigo); }
+.app-shell svg.lucide-tag,
+.app-shell svg.lucide-tags,
+.app-shell svg.lucide-quote { color: var(--c-ic-pink); }
+.app-shell svg.lucide-search,
+.app-shell svg.lucide-eye,
+.app-shell svg.lucide-eye-off,
+.app-shell svg.lucide-lock,
+.app-shell svg.lucide-copy,
+.app-shell svg.lucide-clipboard { color: var(--c-ic-teal); }
+.app-shell svg.lucide-chevron-down,
+.app-shell svg.lucide-chevron-left,
+.app-shell svg.lucide-chevron-right,
+.app-shell svg.lucide-arrow-down,
+.app-shell svg.lucide-arrow-right,
+.app-shell svg.lucide-arrow-up,
+.app-shell svg.lucide-arrow-up-right,
+.app-shell svg.lucide-x,
+.app-shell svg.lucide-menu,
+.app-shell svg.lucide-grip-vertical,
+.app-shell svg.lucide-ellipsis,
+.app-shell svg.lucide-corner-down-left,
+.app-shell svg.lucide-corner-up-right,
+.app-shell svg.lucide-rotate-ccw,
+.app-shell svg.lucide-undo-2,
+.app-shell svg.lucide-redo-2,
+.app-shell svg.lucide-minus,
+.app-shell svg.lucide-loader-2,
+.app-shell svg.lucide-loader-circle,
+.app-shell svg.lucide-bold,
+.app-shell svg.lucide-italic,
+.app-shell svg.lucide-underline,
+.app-shell svg.lucide-strikethrough,
+.app-shell svg.lucide-heading-1,
+.app-shell svg.lucide-heading-2,
+.app-shell svg.lucide-heading-3,
+.app-shell svg.lucide-align-center,
+.app-shell svg.lucide-align-left,
+.app-shell svg.lucide-align-right,
+.app-shell svg.lucide-list,
+.app-shell svg.lucide-list-ordered,
+.app-shell svg.lucide-pilcrow { color: var(--c-ic-slate); }
+
+/* On solid dark or coloured fills the icon must stay the fill's text colour
+   (white), or it disappears: navy bands & buttons, primary/danger buttons,
+   solid status/date chips. Higher specificity than the map above. */
+.app-shell :is(.bg-sidebar, .bg-sidebar-2, .wl-hero, .bg-primary, .bg-danger, .bg-tk-overdue, .bg-tk-today, .bg-status-progress, .bg-status-completed) svg.lucide {
+  color: currentColor;
+}
+/* Checkbox-style toggles draw their tick in currentColor and hide it with
+   `text-transparent` until hover / checked — the map must not force it visible
+   (every open to-do looked ticked). */
+.app-shell [role="checkbox"] svg.lucide { color: currentColor; }
+
+/* ==========================================================================
+   App scroll reveals (2026-10-01) — driven by components/shell/scroll-reveal.tsx.
+   Opt in with `data-reveal` / `data-reveal-stagger`. Elements only ever get
+   `.reveal-pending` from JS while below the fold, so no-JS and reduced-motion
+   users always see everything. Uses `translate` (not `transform`) so card
+   hover lifts keep working, and `animation` (not `transition`) so it never
+   clobbers an element's own colour/shadow transitions.
+   Subtle on purpose: 12px rise, ~420ms, 50ms cascade (ui-ux-pro-max:
+   "scroll reveal — keep y offset 8–16px so it reads as a fade").
+   ========================================================================== */
+@keyframes reveal-rise {
+  from { opacity: 0; translate: 0 12px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .app-shell .reveal-pending { opacity: 0; }
+  .app-shell .reveal-in {
+    animation: reveal-rise 420ms var(--ease-smooth-out) both;
+    animation-delay: calc(var(--reveal-i, 0) * 50ms);
+  }
+}
+
+/* Note reader: the sticky "section › page" label fades in when it changes
+   instead of snapping. Opacity + a 3px rise only — no layout work. */
+@keyframes note-crumb-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
+.note-crumb-in {
+  animation: note-crumb-in 180ms var(--ease-smooth-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .note-crumb-in { animation: none; }
 }

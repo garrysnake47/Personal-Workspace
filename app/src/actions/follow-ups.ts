@@ -12,6 +12,8 @@ import {
   rescheduleFollowUpSchema,
   setFollowUpPinnedSchema,
   setFollowUpStatusSchema,
+  setFollowUpTagsSchema,
+  todosForDaySchema,
 } from "@/lib/validation";
 
 /**
@@ -54,6 +56,26 @@ export async function setFollowUpPinned(input: unknown) {
   if (!followUp) return notFound("Entry not found");
   revalidatePath("/tracker");
   return ok(followUp);
+}
+
+/** Replace a note's tags. Input: { followUpId, tags } */
+export async function setFollowUpTags(input: unknown) {
+  const userId = await requireUserId();
+  const parsed = parseOrFail(setFollowUpTagsSchema, input);
+  if (!parsed.ok) return parsed;
+  const followUp = await followUps.setFollowUpTags(userId, parsed.data.followUpId, parsed.data.tags);
+  if (!followUp) return notFound("Entry not found");
+  revalidatePath("/tracker");
+  return ok(followUp);
+}
+
+/** To-dos finished or overdue on a work log's day. Input: { date: "YYYY-MM-DD" } */
+export async function listTodosForDay(input: unknown) {
+  const userId = await requireUserId();
+  const parsed = parseOrFail(todosForDaySchema, input);
+  if (!parsed.ok) return parsed;
+  if (!parsed.data.date) return ok([]);
+  return ok(await followUps.listTodosAroundDay(userId, parsed.data.date));
 }
 
 export async function setFollowUpStatus(input: unknown) {

@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUserId } from "@/lib/session";
 import { notFound, ok, parseOrFail } from "@/lib/result";
-import type { ResourceType } from "@/generated/prisma/enums";
 import * as content from "@/lib/content";
 import {
   createLinkSchema,
@@ -163,7 +162,7 @@ export async function toggleResourceFavorite(input: unknown) {
   return ok({ favorite: parsed.data.favorite });
 }
 
-export async function listResources(search?: string, type?: ResourceType) {
+export async function listResources(search?: string, type?: string) {
   const userId = await requireUserId();
   return ok(
     await content.listResources(userId, search?.trim() || undefined, type),

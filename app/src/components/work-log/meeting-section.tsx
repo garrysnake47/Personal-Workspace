@@ -110,7 +110,7 @@ export function MeetingSection({
     });
   }
 
-  /** Only meetings the user added can be removed; the four defaults stay. */
+  /** Only meetings the user added can be removed; the three defaults stay. */
   function removeMeeting(meeting: EditorMeeting) {
     // Empty cards go straight away; one with notes asks first.
     if (meeting.notes.trim()) setPendingRemove(meeting);

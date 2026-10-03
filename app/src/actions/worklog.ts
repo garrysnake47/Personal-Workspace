@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUserId } from "@/lib/session";
+import { aiFailureMessage } from "@/lib/ai-summary";
+import { getUserSettings } from "@/lib/user-settings";
 import { fail, notFound, ok, parseOrFail } from "@/lib/result";
 import {
   addMeeting,
@@ -16,6 +18,7 @@ import {
   todayUtc,
   updateWorkLogDetails,
   saveLearningNotesRow,
+  saveWorkLogSummaryRow,
   addLinkAttachment,
   deleteAttachmentRow,
   updateMeeting as updateMeetingRow,
@@ -28,6 +31,7 @@ import {
   updateWorkLogSchema,
   workLogDateSchema,
   saveLearningNotesSchema,
+  generateWorkLogSummarySchema,
   addWorkLogLinkSchema,
   deleteWorkLogAttachmentSchema,
 } from "@/lib/validation";
@@ -45,23 +49,6 @@ function revalidateWorkLog(workLogId?: string) {
     revalidatePath(`/work-logs/${workLogId}`);
     revalidatePath(`/work-logs/${workLogId}/edit`);
   }
-}
-
-/** Today's work log, created with the 4 default meetings if it's the first call. */
-export async function openTodayWorkLog() {
-  const userId = await requireUserId();
-  const date = todayUtc();
-  const existing = await getWorkLogByDate(userId, date);
-  if (existing) {
-    revalidateWorkLog(existing.id);
-    return ok(existing);
-  }
-  if (date.getUTCDay() === 0 || date.getUTCDay() === 6) {
-    return fail("VALIDATION_ERROR", "Work logs can only be created on weekdays");
-  }
-  const workLog = await getOrCreateWorkLog(userId, date);
-  revalidateWorkLog(workLog.id);
-  return ok(workLog);
 }
 
 /** Open (or create) a dated work log. Input: { date, title?, dayType? } — dayType applies on create. */
@@ -202,7 +189,6 @@ export async function deleteMeeting(input: unknown) {
   return ok({ deleted: true });
 }
 
-
 /** Autosave the day's learning / upskilling notes. Input: { workLogId, notes } */
 export async function saveLearningNotes(input: unknown) {
   const userId = await requireUserId();
@@ -211,6 +197,24 @@ export async function saveLearningNotes(input: unknown) {
   const saved = await saveLearningNotesRow(userId, parsed.data.workLogId, parsed.data.notes);
   if (!saved) return notFound("Work log not found");
   return ok({ savedAt: new Date() });
+}
+
+/**
+ * (Re)generate and store the log's summary. Input: { workLogId, auto?, tzOffset? } —
+ * `auto` only fills a missing summary (the one-time generate on first view).
+ */
+export async function generateWorkLogSummary(input: unknown) {
+  const userId = await requireUserId();
+  const parsed = parseOrFail(generateWorkLogSummarySchema, input);
+  if (!parsed.ok) return parsed;
+  const { ticketsEnabled } = await getUserSettings(userId);
+  const saved = await saveWorkLogSummaryRow(userId, parsed.data.workLogId, ticketsEnabled, { auto: parsed.data.auto, tzOffset: parsed.data.tzOffset });
+  if (!saved) return notFound("Work log not found");
+  if (!saved.ok) {
+    return fail("AI_UNAVAILABLE", saved.reason === "empty" ? "Nothing to summarise yet — add tickets, meeting notes, work done or to-dos first." : aiFailureMessage({ reason: saved.reason, model: saved.model }));
+  }
+  revalidateWorkLog(parsed.data.workLogId);
+  return ok(saved);
 }
 
 /** Add a link to a work log. Input: { workLogId, url, label? } */

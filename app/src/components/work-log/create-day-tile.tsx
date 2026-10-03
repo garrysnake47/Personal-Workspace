@@ -51,7 +51,7 @@ export function CreateDayTile({
       disabled={pending}
       aria-label={`Create a work log for ${longLabel}`}
       className={cn(
-        "group flex h-full min-h-32 w-full cursor-pointer flex-col gap-2 rounded-xl border border-dashed p-3 text-left",
+        "group flex h-full min-h-28 w-full cursor-pointer flex-col gap-2 rounded-xl border border-dashed p-3 text-left",
         "transition-[border-color,background-color,transform,box-shadow] duration-150",
         "hover:-translate-y-0.5 hover:border-solid hover:border-primary hover:bg-primary-subtle hover:shadow-md",
         "focus-visible:border-solid focus-visible:border-primary disabled:cursor-wait",

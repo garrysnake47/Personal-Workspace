@@ -31,16 +31,16 @@ export const TICKET_STATUS_LABELS: Record<WorkflowStatus, string> = {
 export const TICKET_STATUS_ORDER: WorkflowStatus[] = [...WORKFLOW_STATUS_ORDER];
 
 /**
- * Solid, high-contrast fills (white label, all >= 4.5:1). Teal and navy come
- * from the app palette; QA / release-ready / done keep distinct hues so the
- * five stages never read as the same colour.
+ * Every stage looks the same way — light tint, soft ring, dark label — and differs by
+ * hue (homepage palette): In Progress blue, Sent to QA orange, Ready for production pink,
+ * Released muted ink, Done green. Every label clears 4.5:1 (6.2–8.8:1).
  */
 const BADGE_CLASS: Record<WorkflowStatus, string> = {
-  InProgress: "bg-status-progress text-primary-fg",
-  SentToQA: "bg-status-testing text-primary-fg",
-  ReadyForProduction: "bg-status-waiting text-primary-fg",
-  Released: "bg-sidebar text-sidebar-fg",
-  Done: "bg-status-completed text-primary-fg",
+  InProgress: "bg-status-progress-bg text-status-progress-fg ring-1 ring-inset ring-status-progress/40",
+  SentToQA: "bg-status-testing-bg text-status-testing-fg ring-1 ring-inset ring-status-testing/60",
+  ReadyForProduction: "bg-status-waiting-bg text-status-waiting-fg ring-1 ring-inset ring-status-waiting/60",
+  Released: "bg-status-closed-bg text-status-closed-fg ring-1 ring-inset ring-status-closed/50",
+  Done: "bg-status-completed-bg text-status-completed-fg ring-1 ring-inset ring-status-completed/50",
 };
 
 /** The bare accent token — dots, a card's 3px left rule, timeline markers. */
@@ -48,17 +48,8 @@ export const TICKET_STATUS_DOT: Record<WorkflowStatus, string> = {
   InProgress: "bg-status-progress",
   SentToQA: "bg-status-testing",
   ReadyForProduction: "bg-status-waiting",
-  Released: "bg-sidebar",
+  Released: "bg-status-closed",
   Done: "bg-status-completed",
-};
-
-/** Same accents as a border colour, for the 3px left rule on a ticket card. */
-export const TICKET_STATUS_RULE: Record<WorkflowStatus, string> = {
-  InProgress: "border-l-status-progress",
-  SentToQA: "border-l-status-testing",
-  ReadyForProduction: "border-l-status-waiting",
-  Released: "border-l-sidebar",
-  Done: "border-l-status-completed",
 };
 
 export function TicketStatusBadge({
@@ -69,7 +60,7 @@ export function TicketStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex h-6 items-center justify-center gap-1.5 rounded-full px-3 text-center text-xs leading-none font-semibold whitespace-nowrap before:size-1.5 before:shrink-0 before:rounded-full before:bg-current before:opacity-80 before:content-['']",
+        "inline-flex h-6 items-center justify-center gap-1.5 rounded-full px-3 text-center text-xs leading-none font-semibold whitespace-nowrap before:size-1.5 before:shrink-0 before:rounded-full before:bg-current before:opacity-70 before:content-['']",
         BADGE_CLASS[status],
         className,
       )}
@@ -80,27 +71,3 @@ export function TicketStatusBadge({
   );
 }
 
-/**
- * Status dot on its own. Only legal where the label is repeated in an adjacent
- * column — hence the required `aria-label` fallback baked in here.
- */
-export function TicketStatusDot({
-  status,
-  className,
-}: {
-  status: WorkflowStatus;
-  className?: string;
-}) {
-  return (
-    <span
-      role="img"
-      aria-label={TICKET_STATUS_LABELS[status]}
-      title={TICKET_STATUS_LABELS[status]}
-      className={cn(
-        "inline-block size-2 shrink-0 rounded-full",
-        TICKET_STATUS_DOT[status],
-        className,
-      )}
-    />
-  );
-}

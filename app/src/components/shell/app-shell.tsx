@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { AppNav, type ShellUser } from "@/components/shell/app-nav";
+import { ScrollReveal } from "@/components/shell/scroll-reveal";
 /**
  * The authenticated frame: a floating pill nav across the top, then the
  * content well. There is no sidebar — navigation lives in the pill, matching
@@ -41,6 +42,7 @@ export function AppShell({
         >
           <div className="mx-auto w-full max-w-[85rem]">{children}</div>
         </main>
+        <ScrollReveal />
       </div>
     </>
   );

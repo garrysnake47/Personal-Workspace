@@ -106,6 +106,8 @@ function NoteDocument({ doc }: { doc: JSONContent }) {
     () =>
       buildNoteExtensions({
         codeBlockNodeView: ReactNodeViewRenderer(CodeBlock),
+        // the reader's topic title is an h3 — page headings start at h4
+        headingOffset: 3,
       }),
     [],
   );

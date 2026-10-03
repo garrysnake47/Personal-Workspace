@@ -20,7 +20,7 @@ import type { NextAuthConfig } from "next-auth";
  * pathname satisfies.
  */
 /** `/banner` is a public design page (`app/banner/page.tsx`) — no session data. */
-export const PUBLIC_ROUTES = ["/", "/login", "/register", "/banner"] as const;
+export const PUBLIC_ROUTES = ["/", "/login", "/register"] as const;
 
 export function isPublicPath(pathname: string): boolean {
   if (pathname.startsWith("/api/auth")) return true;

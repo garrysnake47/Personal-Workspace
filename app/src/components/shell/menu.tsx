@@ -106,14 +106,6 @@ export const menuItemClass = cn(
   "[&_svg]:size-4 [&_svg]:shrink-0",
 );
 
-export function MenuLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="px-2 py-2 text-xs font-medium tracking-[0.06em] text-text-subtle uppercase">
-      {children}
-    </p>
-  );
-}
-
 export function MenuSeparator() {
   return <hr className="my-1 border-t border-border" role="separator" />;
 }

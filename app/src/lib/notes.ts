@@ -12,8 +12,6 @@ import { z } from "zod";
 /** The react-icons sets the picker is allowed to draw from. */
 export const NOTE_ICON_LIBRARIES = ["si", "lu", "fa6"] as const;
 
-export type NoteIconLibrary = (typeof NOTE_ICON_LIBRARIES)[number];
-
 /**
  * A page's body is a TipTap document, so the shape is the editor's business,
  * not ours — validate that it is an object and store it as-is.
@@ -64,8 +62,6 @@ export const noteSchema = z.object({
 });
 
 export type NoteInput = z.infer<typeof noteSchema>;
-export type NoteSectionInput = z.infer<typeof noteSectionSchema>;
-export type NotePageInput = z.infer<typeof notePageSchema>;
 
 /** One page as a page component hands it to the form. */
 export type NotePageDetail = {
@@ -107,4 +103,6 @@ export type NoteSummary = {
   updatedAt: Date;
   /** section titles in editor order — the whole of the list preview */
   sectionTitles: string[];
+  /** total pages across every section (a count — bodies are never loaded) */
+  pageCount: number;
 };

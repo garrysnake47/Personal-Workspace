@@ -32,9 +32,9 @@ function portalContainer(): HTMLElement {
 
 const theme = createTheme({
   palette: {
-    primary: { main: "#3c6e71", contrastText: "#ffffff" },
-    secondary: { main: "#284b63", contrastText: "#ffffff" },
-    text: { primary: "#353535", secondary: "#414141" },
+    primary: { main: "#4562c9", contrastText: "#ffffff" },
+    secondary: { main: "#2a2c3f", contrastText: "#ffffff" },
+    text: { primary: "#2a2c3f", secondary: "#575c72" },
   },
   shape: { borderRadius: 10 },
   typography: { fontFamily: "inherit" },
@@ -62,7 +62,9 @@ const theme = createTheme({
           padding: "10px 14px",
           "&::placeholder": { color: "var(--c-text-subtle)", opacity: 1 },
         },
-        multiline: { padding: "10px 14px" },
+        // The root pads a multiline field; padding the <textarea> as well
+        // doubled it and pushed text/placeholders ~28px in from the edge.
+        multiline: { padding: "10px 14px", "& textarea": { padding: 0 } },
       },
     },
     MuiInputBase: {

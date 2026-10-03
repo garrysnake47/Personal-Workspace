@@ -43,7 +43,7 @@ Run from the repo root unless noted.
 ```bash
 npm run dev          # idempotent setup (env, deps, Docker Postgres :5434, migrations) + Next dev on :3000
 npm run setup        # the same setup without starting the server
-npm run typecheck    # tsc --noEmit for app/
+npm run typecheck    # next typegen + tsc --noEmit for app/ (works on a fresh clone)
 npm run lint         # eslint for app/
 npm run build        # next build --webpack
 npm run db:migrate   # prisma migrate dev (creates + applies a migration)

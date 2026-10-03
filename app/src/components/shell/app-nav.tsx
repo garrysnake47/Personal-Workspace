@@ -1,10 +1,10 @@
 "use client";
 
 import { format } from "date-fns";
-import { LogOut, Menu as MenuIcon, SquareStack, UserRound, X } from "lucide-react";
+import { Award, FileText, LogOut, Menu as MenuIcon, SquareStack, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 import { logout } from "@/actions/auth";
 import { cn } from "@/components/cn";
@@ -20,11 +20,10 @@ export type ShellUser = {
 };
 
 /**
- * The authenticated navigation — a floating pill, the same shape the homepage
- * uses (`marketing/marketing-nav.tsx`): surface fill, hairline top/left edge,
- * thick brand bottom/right edge, fully rounded.
+ * The authenticated navigation — a full-width white bar with the current
+ * section marked by an underline.
  *
- * This replaced the sidebar outright. Sections live in the centre of the pill
+ * This replaced the sidebar outright. Sections live in the centre of the bar
  * on md+, and collapse into a dropdown sheet below it on phones.
  *
  * It is `sticky`, not `fixed`: fixed would sit over the content well and every
@@ -62,10 +61,6 @@ export function AppNav({
   // The server's timezone is not necessarily the user's, so the date is read as
   // an external store: server snapshot is what was rendered, client snapshot is
   // the browser's own clock. No effect, no cascading render.
-  const sectionsRef = useRef<HTMLUListElement>(null);
-  const pillRef = useRef<HTMLSpanElement>(null);
-  useSlidingPill(sectionsRef, pillRef, pathname);
-
   const today = useSyncExternalStore(
     subscribeNever,
     () => format(new Date(), "EEE, d MMM yyyy"),
@@ -87,7 +82,7 @@ export function AppNav({
             "md:grid md:grid-cols-[1fr_auto_1fr]",
           )}
         >
-          {/* Brand + back are ONE grid item. The pill is a 3-column grid from
+          {/* Brand + back are ONE grid item. The bar is a 3-column grid from
               md, so a fourth top-level child would wrap onto a second row. */}
           <div className="flex shrink-0 items-center gap-1 md:justify-self-start">
             <Link
@@ -97,12 +92,12 @@ export function AppNav({
             >
               <span
                 aria-hidden="true"
-                className="grid size-8 place-items-center rounded-lg bg-sidebar text-sidebar-fg shadow-button"
+                className="grid size-8 place-items-center rounded-lg bg-primary text-primary-fg shadow-button"
               >
                 <SquareStack className="size-4" />
               </span>
               {/* Hidden 768–1023: the six section links need the room there. */}
-              <span className="hidden text-lg font-semibold tracking-[-0.03em] whitespace-nowrap text-text xs:inline md:hidden lg:inline">
+              <span className="hidden text-lg font-semibold tracking-[-0.03em] whitespace-nowrap text-sidebar-fg xs:inline md:hidden lg:inline">
                 WorkNest
               </span>
             </Link>
@@ -111,23 +106,26 @@ export function AppNav({
 
           {/* Sections — desktop only; the sheet below carries them on phones. */}
           <nav aria-label="Sections" className="hidden min-w-0 md:block md:justify-self-center">
-            <ul ref={sectionsRef} className="relative flex items-center gap-1 lg:gap-1.5">
-              <span ref={pillRef} aria-hidden="true" className="t-nav-pill" />
+            <ul className="flex items-center gap-1 lg:gap-1.5">
               {sections.map((item) => {
                 const active = isActivePath(pathname, item);
                 return (
-                  <li key={item.href} className="relative z-10">
+                  <li key={item.href}>
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-medium whitespace-nowrap xl:px-3.5",
+                        "inline-flex h-16 items-center gap-2 border-b-[3px] px-3 text-sm whitespace-nowrap xl:px-3.5",
                         "transition-colors duration-150 ease-standard",
-                        active ? "text-text" : "text-text-muted hover:text-text",
+                        // Current page: heavier weight, a 3px teal rule and a teal-tint
+                        // column, so it reads at a glance (a 2px rule alone was too faint).
+                        active
+                          ? "border-sidebar-accent bg-sidebar-accent-bg font-semibold text-sidebar-fg"
+                          : "border-transparent font-medium text-sidebar-muted hover:border-sidebar-subtle hover:text-sidebar-fg",
                       )}
                     >
                       <item.icon
-                        className={cn("hidden size-4 shrink-0 transition-colors duration-150 xl:block", active && "text-primary")}
+                        className={cn("hidden size-4 shrink-0 transition-colors duration-150 xl:block", active && "text-sidebar-accent")}
                         aria-hidden="true"
                       />
                       {item.label}
@@ -141,7 +139,7 @@ export function AppNav({
           <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0 md:justify-self-end">
             <time
               dateTime={new Date().toISOString().slice(0, 10)}
-              className="hidden text-sm font-medium whitespace-nowrap text-text-subtle tabular-nums xl:block"
+              className="hidden text-sm font-medium whitespace-nowrap text-sidebar-muted tabular-nums xl:block"
               suppressHydrationWarning
             >
               {today}
@@ -154,10 +152,10 @@ export function AppNav({
                   {...props}
                   type="button"
                   aria-label="Account menu"
-                  className="flex h-10 cursor-pointer items-center gap-2 rounded-full pr-2 pl-1 transition-colors duration-150 ease-standard hover:bg-surface-2 active:bg-surface-3"
+                  className="flex h-10 cursor-pointer items-center gap-2 rounded-full pr-2 pl-1 transition-colors duration-150 ease-standard hover:bg-sidebar-2 active:bg-sidebar-3"
                 >
                   <Avatar name={user.name} email={user.email} />
-                  <span className="hidden max-w-32 truncate text-sm font-medium text-text lg:block">
+                  <span className="hidden max-w-32 truncate text-sm font-medium text-sidebar-fg lg:block">
                     {user.name ?? user.email ?? "Account"}
                   </span>
                 </button>
@@ -179,6 +177,16 @@ export function AppNav({
                 Profile &amp; settings
               </Link>
 
+              <Link href="/reports" role="menuitem" className={menuItemClass}>
+                <FileText aria-hidden="true" />
+                Reports
+              </Link>
+
+              <Link href="/achievements" role="menuitem" className={menuItemClass}>
+                <Award aria-hidden="true" />
+                Achievements
+              </Link>
+
               <form action={logout}>
                 <button type="submit" role="menuitem" className={menuItemClass}>
                   <LogOut aria-hidden="true" />
@@ -193,7 +201,7 @@ export function AppNav({
               aria-expanded={open}
               aria-controls="app-mobile-menu"
               aria-label={open ? "Close menu" : "Open menu"}
-              className="relative grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-border-strong text-text transition-colors duration-150 ease-standard hover:bg-surface-2 md:hidden"
+              className="relative grid size-11 shrink-0 cursor-pointer place-items-center rounded-full border border-sidebar-subtle text-sidebar-fg transition-colors duration-150 ease-standard hover:bg-sidebar-2 md:hidden"
             >
               <MenuIcon
                 aria-hidden="true"
@@ -217,7 +225,7 @@ export function AppNav({
           <nav
             id="app-mobile-menu"
             aria-label="Sections"
-            className="t-sheet mt-2 mb-3 rounded-2xl border border-border bg-surface p-2 shadow-md md:hidden"
+            className="t-sheet mt-2 mb-3 rounded-2xl border border-sidebar-border bg-sidebar p-2 shadow-md md:hidden"
           >
             <ul className="flex flex-col">
               {sections.map((item) => {
@@ -231,12 +239,12 @@ export function AppNav({
                         "flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-md font-medium",
                         "transition-colors duration-150 ease-standard",
                         active
-                          ? "bg-card-tint text-text [&_svg]:text-primary"
-                          : "text-text-muted hover:bg-surface-2 hover:text-text",
+                          ? "text-sidebar-fg [&_svg]:text-sidebar-accent"
+                          : "text-sidebar-muted hover:bg-sidebar-2 hover:text-sidebar-fg",
                       )}
                     >
                       <item.icon className="size-5 shrink-0" aria-hidden="true" />
-                      {item.label}
+                      <span className={cn(active && "underline decoration-2 decoration-sidebar-accent underline-offset-8")}>{item.label}</span>
                     </Link>
                   </li>
                 );
@@ -247,48 +255,6 @@ export function AppNav({
       </div>
     </header>
   );
-}
-
-/**
- * Slides the active-section pill under the current link.
- * Measured after layout, on route change and on resize. The very first
- * placement skips the transition so the pill doesn't sweep in from the left.
- */
-function useSlidingPill(
-  listRef: RefObject<HTMLUListElement | null>,
-  pillRef: RefObject<HTMLSpanElement | null>,
-  pathname: string,
-) {
-  const placed = useRef(false);
-  useLayoutEffect(() => {
-    const list = listRef.current;
-    const pill = pillRef.current;
-    if (!list || !pill) return;
-
-    function place() {
-      if (!list || !pill) return;
-      const active = list.querySelector<HTMLElement>('a[aria-current="page"]');
-      if (!active) {
-        pill.dataset.ready = "false";
-        return;
-      }
-      const first = !placed.current;
-      if (first) pill.style.transition = "none";
-      pill.style.width = `${active.offsetWidth}px`;
-      pill.style.transform = `translateX(${active.parentElement?.offsetLeft ?? 0}px)`;
-      pill.dataset.ready = "true";
-      if (first) {
-        void pill.offsetWidth; // commit the jump before re-enabling transitions
-        pill.style.transition = "";
-        placed.current = true;
-      }
-    }
-
-    place();
-    const observer = new ResizeObserver(place);
-    observer.observe(list);
-    return () => observer.disconnect();
-  }, [listRef, pillRef, pathname]);
 }
 
 /** The clock never notifies us; a re-render is close enough for a date. */
@@ -310,7 +276,7 @@ function Avatar({ name, email }: { name: string | null; email: string | null }) 
   return (
     <span
       aria-hidden="true"
-      className="grid size-8 shrink-0 place-items-center rounded-full bg-surface-2 text-xs font-semibold text-text"
+      className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-2 text-xs font-semibold text-sidebar-fg"
     >
       {initials}
     </span>

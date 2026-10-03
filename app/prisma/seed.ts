@@ -4,7 +4,6 @@ import { PrismaPg } from "@prisma/adapter-pg";
 
 import { PrismaClient } from "../src/generated/prisma/client";
 import {
-  ResourceType,
   TaskPriority,
   TaskStatus,
   TicketStatus,
@@ -395,14 +394,14 @@ async function main() {
         userId: user.id,
         title: "Reset the local database",
         description: "Wipes and re-seeds the dev Postgres.",
-        type: ResourceType.Command,
+        type: "Command",
         content: "npm run db:reset",
         tags: ["prisma", "local"],
       },
       {
         userId: user.id,
         title: "Find slow queries in Postgres",
-        type: ResourceType.Snippet,
+        type: "Snippet",
         content:
           "select query, calls, mean_exec_time\nfrom pg_stat_statements\norder by mean_exec_time desc\nlimit 20;",
         tags: ["postgres", "perf"],
@@ -410,7 +409,7 @@ async function main() {
       {
         userId: user.id,
         title: "Prisma relation queries",
-        type: ResourceType.Documentation,
+        type: "Documentation",
         url: "https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries",
         tags: ["prisma"],
       },

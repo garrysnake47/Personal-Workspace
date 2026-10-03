@@ -2,7 +2,6 @@ import "server-only";
 
 import { prisma } from "@/lib/prisma";
 import {
-  ResourceType,
   TaskPriority,
   TaskStatus,
 } from "@/generated/prisma/enums";
@@ -136,13 +135,6 @@ export async function listTasks(
   });
 }
 
-export async function getTask(userId: string, taskId: string) {
-  return prisma.task.findFirst({
-    where: { id: taskId, userId },
-    include: { ticket: true },
-  });
-}
-
 // ---------------------------------------------------------------------------
 // Links
 // ---------------------------------------------------------------------------
@@ -219,7 +211,7 @@ export async function listLinks(userId: string, search?: string, take = 200) {
 export type ResourceInput = {
   title: string;
   description?: string;
-  type?: ResourceType;
+  type?: string;
   url?: string | null;
   content?: string;
   tags?: string[];
@@ -231,7 +223,7 @@ export async function createResource(userId: string, input: ResourceInput) {
       userId,
       title: input.title,
       description: input.description ?? "",
-      type: input.type ?? ResourceType.Other,
+      type: input.type ?? "Other",
       url: input.url || null,
       content: input.content ?? "",
       tags: input.tags ?? [],
@@ -269,7 +261,7 @@ export async function deleteResource(userId: string, resourceId: string) {
 export async function listResources(
   userId: string,
   search?: string,
-  type?: ResourceType,
+  type?: string,
   take = 200,
 ) {
   return prisma.resource.findMany({
@@ -292,6 +284,3 @@ export async function listResources(
   });
 }
 
-export async function getResource(userId: string, resourceId: string) {
-  return prisma.resource.findFirst({ where: { id: resourceId, userId } });
-}

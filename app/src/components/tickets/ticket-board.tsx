@@ -63,7 +63,8 @@ export function TicketBoard({ initialTickets, loadError, daysOff = [] }: { initi
     });
   }, [query, status, tickets]);
 
-  const selectedTicket = visibleTickets.find((ticket) => ticket.id === selectedId) ?? null;
+  // Never open on an empty detail panel: fall back to the first ticket in the list.
+  const selectedTicket = visibleTickets.find((ticket) => ticket.id === selectedId) ?? visibleTickets[0] ?? null;
 
   function replaceTicket(ticketId: string, patch: Partial<Pick<TicketBoardItem, "title" | "projectName" | "status" | "updatedAt">>) {
     setTickets((current) => current.map((ticket) => ticket.id === ticketId ? { ...ticket, ...patch } : ticket));
@@ -129,11 +130,12 @@ export function TicketBoard({ initialTickets, loadError, daysOff = [] }: { initi
 
           <div className="grid min-w-0 items-start gap-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[19rem_minmax(0,1fr)] lg:grid-rows-[minmax(0,1fr)] lg:items-stretch lg:gap-6">
             <aside aria-label="Ticket list" className="hidden min-h-0 overflow-hidden rounded-2xl border border-border bg-card lg:flex lg:flex-col">
-              <div className="flex items-center justify-between px-4 pb-1 pt-4">
-                <p className="text-sm font-semibold text-text">All tickets</p>
-                <span className="text-xs text-text-subtle">{visibleTickets.length} shown</span>
+              {/* Navy header band — the page's dark anchor, matching the open ticket's header. */}
+              <div className="flex items-center justify-between bg-sidebar px-4 py-3 text-sidebar-fg">
+                <p className="text-sm font-semibold">{status === "All" ? "All tickets" : TICKET_STATUS_LABELS[status]}</p>
+                <span className="rounded-full bg-sidebar-accent-bg px-2 py-0.5 text-xs font-semibold tabular-nums">{visibleTickets.length} shown</span>
               </div>
-              <div className="wl-scroll min-h-0 flex-1 overflow-y-auto p-2">
+              <div data-reveal-stagger className="wl-scroll min-h-0 flex-1 overflow-y-auto p-2">
                 {visibleTickets.map((ticket) => (
                   <TicketListItem key={ticket.id} ticket={ticket} selected={ticket.id === selectedTicket?.id} onSelect={() => setSelectedId(ticket.id)} />
                 ))}
@@ -167,7 +169,7 @@ function TicketListItem({ ticket, selected, onSelect }: { ticket: TicketBoardIte
       onClick={onSelect}
       className={cn(
         "group mb-1 flex w-full cursor-pointer flex-col gap-2 rounded-xl border px-3 py-3 text-left transition-colors duration-150 last:mb-0",
-        selected ? "border-primary bg-primary-subtle" : "border-transparent hover:border-border hover:bg-surface",
+        selected ? "border-sidebar border-l-4 bg-primary-subtle" : "border-transparent hover:border-border hover:bg-surface",
       )}
     >
       <div className="flex w-full items-center justify-between gap-2">
@@ -288,14 +290,19 @@ function TicketDetailPanel({ ticket, daysOff, onChange }: {
 
   return (
     <article aria-labelledby={`ticket-heading-${ticket.id}`} className="wl-scroll min-w-0 overflow-hidden rounded-2xl border border-border bg-card lg:h-full lg:overflow-y-auto">
-      <header className="px-5 pt-5 md:px-6">
+      {/* Navy header: the ticket you're looking at is the darkest thing on the page. */}
+      <header className="bg-sidebar px-5 py-5 text-sidebar-fg md:px-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2"><TicketId>{ticket.ticketId}</TicketId><TicketStatusBadge status={ticket.status} /></div>
-            <h2 id={`ticket-heading-${ticket.id}`} className="mt-2 text-2xl font-semibold tracking-tight text-text">{ticket.title}</h2>
-            {ticket.projectName ? <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-accent-text"><Building2 className="size-4" aria-hidden="true" />{ticket.projectName}</p> : null}
+            <div className="flex flex-wrap items-center gap-2">
+              <TicketId className="text-sidebar-fg">{ticket.ticketId}</TicketId>
+              {/* A ring keeps the navy "Released" badge visible on the navy band. */}
+              <TicketStatusBadge status={ticket.status} className="ring-1 ring-sidebar-subtle" />
+            </div>
+            <h2 id={`ticket-heading-${ticket.id}`} className="mt-2 text-2xl font-semibold tracking-tight text-balance">{ticket.title}</h2>
+            {ticket.projectName ? <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-sidebar-muted"><Building2 className="size-4" aria-hidden="true" />{ticket.projectName}</p> : null}
           </div>
-          <div className="shrink-0 text-sm text-text-subtle md:text-right">
+          <div className="shrink-0 text-sm text-sidebar-muted md:text-right">
             <p>{ticket.workLogCount} {ticket.workLogCount === 1 ? "work log" : "work logs"}</p>
             <time dateTime={ticket.updatedAt}>Updated {formatTicketDate(ticket.updatedAt)}</time>
           </div>
@@ -488,7 +495,7 @@ function TicketJourney({ journey }: { journey: Journey }) {
     <section aria-label="Ticket timeline" className="mx-5 mb-1 mt-4 rounded-xl border border-border bg-surface p-4 md:mx-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h3 className="flex items-center gap-2 text-sm font-semibold text-text"><CalendarDays className="size-4 text-accent-text" aria-hidden="true" />Ticket timeline</h3>
-        <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", journey.done ? "bg-status-completed text-primary-fg" : "bg-status-progress text-primary-fg")}>
+        <span className={cn("rounded-full px-3 py-1 text-xs font-semibold", journey.done ? "bg-status-completed-bg text-status-completed-fg ring-1 ring-inset ring-status-completed/50" : "bg-status-progress-bg text-status-progress-fg ring-1 ring-inset ring-status-progress/40")}>
           {journey.done ? "Done in" : "Open for"} {journey.workingDays} {journey.workingDays === 1 ? "day" : "days"}
         </span>
       </div>

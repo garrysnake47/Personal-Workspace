@@ -1,9 +1,7 @@
 import { z } from "zod";
 import {
   EntryKind,
-  FollowUpChannel,
   FollowUpStatus,
-  ResourceType,
   TaskPriority,
   TaskStatus,
 } from "@/generated/prisma/enums";
@@ -40,17 +38,15 @@ export const entryKindSchema = z.enum(
   Object.values(EntryKind) as [string, ...string[]],
 ) as z.ZodType<EntryKind>;
 
-export const followUpChannelSchema = z.enum(
-  Object.values(FollowUpChannel) as [string, ...string[]],
-) as z.ZodType<FollowUpChannel>;
+/** Free text since 2026-10-01 — the options come from the user's Profile list. */
+export const followUpChannelSchema = z.string().trim().min(1, "Required").max(60);
 
 export const followUpStatusSchema = z.enum(
   Object.values(FollowUpStatus) as [string, ...string[]],
 ) as z.ZodType<FollowUpStatus>;
 
-export const resourceTypeSchema = z.enum(
-  Object.values(ResourceType) as [string, ...string[]],
-) as z.ZodType<ResourceType>;
+/** Free text since 2026-10-01 — the options come from the user's Profile list. */
+export const resourceTypeSchema = z.string().trim().min(1, "Required").max(60);
 
 /** Accepts "YYYY-MM-DD" or a Date; always yields a UTC-midnight Date. */
 export const dateOnlySchema = z
@@ -135,9 +131,6 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required").max(200),
 });
 
-export type RegisterInput = z.input<typeof registerSchema>;
-export type LoginInput = z.input<typeof loginSchema>;
-
 // --- work log ---------------------------------------------------------------
 
 export const dayTypeSchema = z.enum(["Work", "Holiday", "Leave"]);
@@ -178,6 +171,13 @@ export const deleteMeetingSchema = z.object({ meetingId: idSchema });
 export const saveLearningNotesSchema = z.object({
   workLogId: idSchema,
   notes: richText(20_000),
+});
+
+export const generateWorkLogSummarySchema = z.object({
+  workLogId: idSchema,
+  auto: z.boolean().optional(),
+  /** The browser's `Date#getTimezoneOffset()` — decides which to-dos fall on the log's day. */
+  tzOffset: z.number().int().min(-840).max(840).optional(),
 });
 
 export const addWorkLogLinkSchema = z.object({
@@ -312,7 +312,6 @@ export const updateResourceSchema = createResourceSchema.partial().extend({
 
 export const deleteResourceSchema = z.object({ resourceId: idSchema });
 
-
 // --- follow-ups -------------------------------------------------------------
 
 /** A follow-up due date is a plain calendar day; no time component is stored. */
@@ -347,6 +346,7 @@ export const createFollowUpSchema = z
     note: z.string().trim().max(10_000).optional(),
     channel: followUpChannelSchema.optional(),
     occurredAt: optionalDateSchema,
+    tags: tagsSchema,
   })
   .superRefine((value, ctx) => {
     // Only a follow-up is addressed to someone. A task or a note is yours, so
@@ -358,22 +358,32 @@ export const createFollowUpSchema = z
         message: "Who did you update?",
       });
     }
-    if ((value.kind === "Note" || value.kind === "Idea") && value.dueDate) {
+    if (value.kind === "Note" && value.dueDate) {
       ctx.addIssue({
         code: "custom",
         path: ["dueDate"],
-        message: "Notes and ideas have no due date — log it as a task instead",
+        message: "Notes have no due date — add it as a to-do instead",
       });
     }
   });
 
-/** Appending is the only write that touches history, so `note` is required. */
-export const addFollowUpUpdateSchema = z.object({
-  followUpId: idSchema,
-  note: z.string().trim().min(1, "Write what you told them").max(10_000),
-  channel: followUpChannelSchema.optional(),
-  occurredAt: optionalDateSchema,
-});
+/**
+ * Appending is the only write that touches history, so `note` is required —
+ * except for their reply, where "they replied" is itself the fact worth keeping.
+ */
+export const addFollowUpUpdateSchema = z
+  .object({
+    followUpId: idSchema,
+    note: z.string().trim().max(10_000),
+    channel: followUpChannelSchema.optional(),
+    occurredAt: optionalDateSchema,
+    fromThem: z.boolean().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.fromThem && !value.note) {
+      ctx.addIssue({ code: "custom", path: ["note"], message: "Write something first" });
+    }
+  });
 
 export const setFollowUpPinnedSchema = z.object({
   followUpId: idSchema,
@@ -392,6 +402,14 @@ export const rescheduleFollowUpSchema = z.object({
 
 export const deleteFollowUpSchema = z.object({ followUpId: idSchema });
 
+export const setFollowUpTagsSchema = z.object({
+  followUpId: idSchema,
+  tags: tagsSchema,
+});
+
+/** A work log's calendar day, for the "to-dos that day" card. */
+export const todosForDaySchema = z.object({ date: followUpDueDateSchema });
+
 // --- profile ---------------------------------------------------------------
 
 export const updateProfileSchema = z.object({
@@ -402,4 +420,79 @@ export const updateProfileSchema = z.object({
   ticketsEnabled: z.boolean(),
 });
 
+export const saveOpenRouterKeySchema = z.object({
+  apiKey: z.string().trim().min(10, "That doesn't look like an OpenRouter key").max(300).regex(/^\S+$/, "Keys don't contain spaces"),
+});
+
+/** Comma-separated OpenRouter model ids, or "" for the default. */
+export const saveOpenRouterModelSchema = z.object({
+  model: z.string().trim().max(500).regex(/^([\w.\-/:]+(\s*,\s*[\w.\-/:]+)*)?$/, "Use model ids like openrouter/free, separated by commas"),
+});
+
+/** Reports: any day inside the sprint, "YYYY-MM-DD". */
+export const generateReportSchema = z.object({
+  sprint: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick a sprint"),
+});
+
 export const toggleResourceFavoriteSchema =z.object({ resourceId: idSchema, favorite: z.boolean() });
+
+// --- profile lists -----------------------------------------------------------
+
+const listValue = z.string().trim().min(1, "Required").max(60);
+
+export const setOrderedListSchema = z.object({
+  kind: z.enum(["FollowUpChannel", "ResourceType", "DefaultMeeting"]),
+  values: z.array(listValue).max(50),
+});
+
+export const resetOrderedListSchema = z.object({
+  kind: z.enum(["FollowUpChannel", "ResourceType", "DefaultMeeting"]),
+});
+
+export const projectNameSchema = z.object({ name: listValue });
+
+const tagKind = z.enum(["NoteTag", "ResourceTag"]);
+const tagValue = z.string().trim().min(1, "Required").max(40);
+
+export const tagSchema = z.object({ kind: tagKind, tag: tagValue });
+
+export const tagKindSchema = z.object({ kind: tagKind });
+
+/** An icon from the note icon index: "si:SiGithub", "lu:LuGlobe", "fa6:FaBook". null = back to the guess. */
+export const setResourceTypeIconSchema = z.object({
+  type: listValue,
+  icon: z.string().regex(/^(si|lu|fa6):[A-Za-z0-9]{2,60}$/, "Pick an icon from the list").nullable(),
+});
+
+export const renameTagSchema = z.object({ kind: tagKind, from: tagValue, to: tagValue });
+
+// --- achievements ------------------------------------------------------------
+
+const optionalDayKey = z
+  .string()
+  .trim()
+  .refine((s) => s === "" || /^\d{4}-\d{2}-\d{2}$/.test(s), "Pick a valid date")
+  .nullable()
+  .optional()
+  .transform((s) => (s ? new Date(`${s}T00:00:00.000Z`) : null));
+
+export const achievementSchema = z
+  .object({
+    title: cleanLine(160),
+    type: z.string().trim().min(1, "Required").max(60),
+    status: z.enum(["InProgress", "Completed"]),
+    assignedBy: optionalCleanLine(80),
+    startDate: optionalDayKey,
+    endDate: optionalDayKey,
+    description: richText(5000),
+  })
+  .refine((data) => !data.startDate || !data.endDate || data.endDate >= data.startDate, {
+    message: "End date can't be before the start date",
+    path: ["endDate"],
+  });
+
+export const updateAchievementSchema = z.object({ achievementId: idSchema, data: achievementSchema });
+
+export const achievementIdSchema = z.object({ achievementId: idSchema });
+
+export const achievementFileIdSchema = z.object({ fileId: idSchema });

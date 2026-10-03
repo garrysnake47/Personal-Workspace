@@ -1,13 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import {
-  Archivo,
-  Bricolage_Grotesque,
+  DM_Serif_Display,
   Geist,
   Geist_Mono,
-  Martian_Mono,
   Plus_Jakarta_Sans,
 } from "next/font/google";
-import localFont from "next/font/local";
 
 import { Providers } from "@/components/providers";
 
@@ -19,10 +16,9 @@ import "./globals.css";
  * steps, so dense 13-14px labels keep a clear hierarchy. Geist Mono carries
  * ticket IDs, timestamps and code, and shares Geist's metrics.
  *
- * Plus Jakarta Sans stays loaded for the PUBLIC pages only (homepage, banner,
- * auth), which reference `--font-jakarta` directly. Its italic is used for one
- * span in the marketing hero, so the real italic file is loaded rather than a
- * synthesised oblique.
+ * Plus Jakarta Sans stays loaded for the PUBLIC pages only (homepage, login,
+ * register), which reference `--font-jakarta` directly; its italic file is loaded
+ * so italic text isn't a synthesised oblique.
  *
  * Self-hosted by `next/font` (no Google request at runtime, no layout shift).
  */
@@ -46,44 +42,17 @@ const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
 });
 
-/* ---------------------------------------------------------------------------
-   Marketing faces — PUBLIC PAGES ONLY. The app UI is Plus Jakarta Sans +
-   JetBrains Mono and stays that way; these three are scoped to
-   `.marketing-document` in globals.css.
-
-   Bricolage Grotesque is the display voice: variable width and optical size,
-   engineered rather than neutral. Deliberately NOT a monospace — mono as a
-   costume for "technical" is a refusal, so Martian Mono is confined to the
-   things that are actually data: commit ids, timestamps, dates and counts,
-   where its tabular figures do real work. Archivo carries prose.
---------------------------------------------------------------------------- */
-const bricolage = Bricolage_Grotesque({
+/**
+ * Display serif for the public pages (homepage, login, register) — matches the
+ * user's "Take it to the next level" banner: sturdy, high-contrast, one weight.
+ */
+const dmSerif = DM_Serif_Display({
   subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
   display: "swap",
-  variable: "--font-bricolage",
+  variable: "--font-dm-serif",
 });
-
-const archivo = Archivo({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-archivo",
-});
-
-const martianMono = Martian_Mono({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-martian-mono",
-});
-
-const cormorant = localFont({
-  src: [
-    { path: "./fonts/cormorant-garamond-500.ttf", weight: "500", style: "normal" },
-    { path: "./fonts/cormorant-garamond-600.ttf", weight: "600", style: "normal" },
-  ],
-  display: "swap",
-  variable: "--font-cormorant",
-});
-
 
 export const metadata: Metadata = {
   title: {
@@ -104,7 +73,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`h-full ${geist.variable} ${geistMono.variable} ${jakarta.variable} ${bricolage.variable} ${archivo.variable} ${martianMono.variable} ${cormorant.variable}`}
+      className={`h-full ${geist.variable} ${geistMono.variable} ${jakarta.variable} ${dmSerif.variable}`}
     >
       <body className="flex min-h-full flex-col bg-bg text-text">
         <Providers>{children}</Providers>
